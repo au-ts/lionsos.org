@@ -27,9 +27,9 @@ least one host on both subnets with IP forwarding knowledge.
 
 When first booting up the system if everything works correctly, you should see
 serial output dependent on whether or not you have configured the system for
-[additional debug output](./building). Regardless of whether debug output is
+[additional debug output](../building). Regardless of whether debug output is
 turned on, the Micropython webserver component should output a status message
-about its IP address, which should match the [internal IP address](./building)
+about its IP address, which should match the [internal IP address](../building)
 allocated to the system:
 
 ```sh
