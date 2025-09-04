@@ -33,7 +33,7 @@ about its IP address, which should match the [internal IP address](../building)
 allocated to the system:
 
 ```sh
-micropython: mpfirewallport.c:41:fw_netif_status_callback: IP address for micropython is: 192.168.1.1
+micropython: mpfirewallport.c:79:fw_netif_status_callback: IP address for micropython is: 192.168.1.1
 Starting async server on 0.0.0.0:80...
 ```
 
