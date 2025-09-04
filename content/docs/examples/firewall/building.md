@@ -21,7 +21,7 @@ Run the following commands depending on your machine:
 ```sh
 sudo apt update && sudo apt install make cmake clang lld llvm device-tree-compiler unzip git qemu-system-arm python3 python3-pip
 # If you see 'error: externally-managed-environment', add --break-system-packages
-pip3 install sdfgen==0.25.0
+pip3 install sdfgen==0.26.0
 ```
 {{% /tab %}}
 {{% tab "macOS" %}}
@@ -32,14 +32,14 @@ pip3 install sdfgen==0.25.0
 # Homebrew will print out the correct path to add
 brew install make dtc llvm qemu
 # If you see 'error: externally-managed-environment', add --break-system-packages
-pip3 install sdfgen==0.25.0
+pip3 install sdfgen==0.26.0
 ```
 {{% /tab %}}
 {{% tab "Arch" %}}
 ```sh
 sudo pacman -Sy make clang lld dtc python3 python-pip
 # If you see 'error: externally-managed-environment', add --break-system-packages
-pip3 install sdfgen==0.25.0
+pip3 install sdfgen==0.26.0
 ```
 {{% /tab %}}
 {{% tab "Nix" %}}
@@ -125,7 +125,7 @@ to toggle debug printing is `FW_DEBUG_OUTPUT` and can be found in
 cd examples/firewall
 export MICROKIT_SDK=/path/to/sdk
 # Platform to target
-export MICROKIT_BOARD=imx8mp_evk
+export MICROKIT_BOARD=imx8mp_iotgate
 make
 ```
 
