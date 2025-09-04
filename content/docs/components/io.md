@@ -31,6 +31,9 @@ Currently sDDF offers a variety of device classes, such as:
 
 The design and goals of sDDF can be found [here](https://trustworthy.systems/projects/drivers/sddf-design-latest.pdf).
 
+For a full list of the device classes and drivers we support, see
+[sDDF](https://github.com/au-ts/sddf/blob/main/docs/drivers.md).
+
 ## Higher-level clients
 
 In general, anything higher-level than a virtualiser that is a generic client is provided by LionsOS.
@@ -40,4 +43,6 @@ The main example of this is file systems.
 ### File Systems
 
 Right now our work regarding file systems is quite rudimentary. We support the Network File System (NFS)
-but are working on a FAT file system as well as an actual block device driver.
+and the FAT file system.
+
+These interact with either native block drivers or virtualised drivers from Linux.
