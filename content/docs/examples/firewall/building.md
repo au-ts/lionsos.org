@@ -18,7 +18,7 @@ Once the next Microkit release is out, we will pin to that instead.
 ## Acquire source code
 
 ```sh
-git clone https://github.com/au-ts/lionsos.git --branch firewall
+git clone https://github.com/au-ts/lionsos.git
 cd lionsos
 ```
 
