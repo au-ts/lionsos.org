@@ -29,7 +29,7 @@ Currently sDDF offers a variety of device classes, such as:
 * I<sup>2</sup>C
 * Block
 
-The design and goals of sDDF can be found [here](https://trustworthy.systems/projects/drivers/sddf-design.pdf).
+The design and goals of sDDF can be found [here](https://trustworthy.systems/projects/drivers/sddf-design-latest.pdf).
 
 ## Higher-level clients
 

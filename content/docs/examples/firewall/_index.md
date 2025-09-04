@@ -72,7 +72,7 @@ sDDF net system this is always the case, however the firewall often requires
 components to return buffers to different components. sDDF net queues also use a
 signaling protocol to decide when to signal their neighbouring component. More
 on sDDF net queues can be found
-[here](https://trustworthy.systems/projects/drivers/sddf-design.pdf).
+[here](https://trustworthy.systems/projects/drivers/sddf-design-latest.pdf).
 
 ### Firewall Queues
 
@@ -114,7 +114,7 @@ protocol.
 The firewall network transmit (Tx) and receive (Rx) virtualisers are based on
 the sDDF network virtualiser components with minimal modifications, as detailed
 in the [sDDF design
-document](https://trustworthy.systems/projects/drivers/sddf-design.pdf). The
+document](https://trustworthy.systems/projects/drivers/sddf-design-latest.pdf). The
 main modification to both virtualisers is the introduction of [firewall
 queues](#firewall-queues) in addition to [sDDF net queues](#sddf-net-queues).
 This alters the flow of control of the virtualisers as both queues need to be

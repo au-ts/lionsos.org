@@ -31,7 +31,7 @@ a particular task.  Components are joined together using the
 [Microkit](https://github.com/seL4/microkit) tool.
 
 The principles on which a LionsOS system is built are laid out fully
-in the [sDDF design document](https://trustworthy.systems/projects/drivers/sddf-design.pdf); but in brief they
+in the [sDDF design document](https://trustworthy.systems/projects/drivers/sddf-design-latest.pdf); but in brief they
 are:
 1. Components are connected by lock-free queues using an efficient
    model-checked signalling mechanism.
