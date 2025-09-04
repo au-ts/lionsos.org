@@ -138,17 +138,16 @@ routers and ARP components.
 The firewall metaprogram is responsible for creating all the required Microkit
 objects and sDDF connections. It also creates `.data` files containing
 serialised encodings of this data for all the protection domains in the system.
-These `.data` files are then `OBJCOPY`ied into each `.elf` file either in the
+We then `objcopy` these `.data` files into each `.elf` file, either in the
 metaprogram itself or in the makefile `firewall.mk`.
 
-Due to the high degree of complexity of the firewall and the vast number of
+Due to the high degree of complexity of the firewall, and the vast number of
 connections between components, the firewall system defines a large number of
-_firewall configuration structs_, defined in the config file,
-`include/lions/firewall/config.h`. Typically for most LionsOS systems, this
-complexity is hidden within the Python the `sdfgen` module. However, since the
-firewall is a new system, and the system information is still under development,
-we handle the creation and serialisation of these `.data` files in the
-metaprogram.
+_firewall configuration structs_: `include/lions/firewall/config.h`. Typically,
+for most LionsOS systems, this complexity is hidden within the `sdfgen` module.
+However, since the firewall is a new system, and the system information is still
+under development, we handle the creation and serialisation of these `.data` files
+in the metaprogram.
 
 The `sdfgen_helper.py` script runs prior to the `metaprogram.py`, and generates
 a python module named `config_structs.py` which defines a Python class for each
