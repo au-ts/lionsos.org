@@ -109,12 +109,17 @@ export PATH=$(pwd)/arm-gnu-toolchain-12.3.rel1-darwin-x86_64-aarch64-none-elf/bi
 
 ## Compiling the firewall system
 
-Before compiling the firewall system, you may wish to toggle the debug printing
-of firewall components on or off. Debug printing is helpful as it provides a
-trace of all packets through the firewall, however the large number of printing
-components tend to interfere with each other and cause a high degree of latency
-through the system. The macro used to toggle debug printing is `FW_DEBUG_OUTPUT`
-and can be found in `include/lions/firewall/config.h`.
+Before compiling the firewall system, it is important that you first update the
+[system wide configuration constants](#firewall-system-constants) that will be
+used in all firewall components. These can be found at the top of the
+[metaprogram](#firewall-metaprogram).
+
+You may also wish to toggle the debug printing of firewall components on or off.
+Debug printing is helpful as it provides a trace of all packets through the
+firewall, however the large number of printing components tend to interfere with
+each other and cause a high degree of latency through the system. The macro used
+to toggle debug printing is `FW_DEBUG_OUTPUT` and can be found in
+`include/lions/firewall/config.h`.
 
 ```sh
 cd examples/firewall
