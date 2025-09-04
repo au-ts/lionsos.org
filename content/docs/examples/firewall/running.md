@@ -4,7 +4,7 @@ draft = false
 weight = 100
 +++
 
-## Running on hardware
+# Running on hardware
 
 Unfortunately, since the firewall [does not currently run on
 qemu](https://github.com/au-ts/lionsos/issues/195), it requires a more
@@ -23,7 +23,7 @@ routed through the firewall is to set up IP forwarding for traffic destined for
 the opposing subnet to be routed to the firewall's local IP. This requires at
 least one host on both subnets with IP forwarding knowledge.
 
-### Booting
+## Booting
 
 When first booting up the system if everything works correctly, you should see
 serial output dependent on whether or not you have configured the system for
