@@ -57,9 +57,3 @@ hugo --gc --minify
 
 All the generated files will be in `public/`.
 
-## Design files
-
-All diagrams are in SVG format and made in a tool called [Figma](https://figma.com).
-
-The link to the design file is [here](https://www.figma.com/file/cUe98sFv4JyY7VWz374RNv/LionsOS-docs?type=design&node-id=0%3A1&mode=design&t=M6pKokl1dW035I91-1).
-
