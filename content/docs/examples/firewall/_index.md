@@ -20,7 +20,6 @@ working on can be found
 
 This page describes the system's architecture and details how it works, if you
 are interested in building and running it see the pages on:
-* [Hardware setup](./hardware)
 * [Building](./building)
 * [Running](./running)
 
@@ -32,8 +31,8 @@ The system currently only works on the following platform, although we hope to
 
 Since we currently only support real hardware, to test the firewall system you
 will also need to configure subnets and network nodes for each network
-interface. For details on this, please see the section on [hardware
-setup](./hardware).
+interface. For details on this, please see the section on [running the
+firewall](./running).
 
 ## Architecture
 
