@@ -14,7 +14,7 @@ unsafe = true
   BookRepo = 'https://github.com/au-ts/lionsos_docs'
   LionsOsVersion = '0.3.0'
   MicrokitVersion = '2.0.1'
-  SdfgenVersion = '0.23.1'
+  SdfgenVersion = '0.26.0'
 
 [menu]
 [[menu.after]]
