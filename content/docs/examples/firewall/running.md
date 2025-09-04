@@ -27,10 +27,10 @@ least one host on both subnets with IP forwarding knowledge.
 
 When first booting up the system if everything works correctly, you should see
 serial output dependent on whether or not you have configured the system for
-[additional debug output](./building.md). Regardless of whether debug output is
+[additional debug output](./building). Regardless of whether debug output is
 turned on, the Micropython webserver component should output a status message
-about its IP address, which should match the [internal IP
-address](./building.md) allocated to the system:
+about its IP address, which should match the [internal IP address](./building)
+allocated to the system:
 
 ```sh
 micropython: mpfirewallport.c:41:netif_status_callback: IP address for micropython is: 192.168.1.1
