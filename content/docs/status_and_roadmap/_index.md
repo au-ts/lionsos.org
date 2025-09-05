@@ -57,7 +57,7 @@ away from being available for use.
 
 ### More dynamicism
 
-While LionsOS will continue to only support a static architecture, we have worked on two areas
+While LionsOS systems will always have a static architecture, we have worked on two areas
 to improve the level of dynamicism that LionsOS supports.
 
 The first is adapting sDDF drivers such that they can handle dynamic changes at the device level.
