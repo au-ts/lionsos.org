@@ -73,5 +73,5 @@ We currently have a project that aims to turn LionsOS into a library OS that sup
 applications that can be spun up and destroyed on demand. This ties into the 'PD templates' feature
 outlined above.
 
-We are also interested in exploring using a Web Assembly runtime combined with WASI to implement
-similar usability, but have not started working on this yet.
+We are also interested in exploring using a [Web Assembly](https://webassembly.org/) runtime combined
+with [WASI](https://wasi.dev/) to implement similar usability, but have not started working on this yet.
