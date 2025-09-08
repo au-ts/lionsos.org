@@ -72,5 +72,6 @@ Rust is becoming popular within the embedded space and now with
 [first-class Rust support for seL4](https://github.com/seL4/rust-sel4)
 it is fairly easy to write Rust programs for an seL4 environment.
 
-At this stage, we have only use Rust to write certain device drivers but
-are interested in providing Rust bindings for LionsOS APIs in the future.
+At this stage, we have only used Rust to write certain device drivers but
+are interested in providing Rust bindings for LionsOS APIs in the future
+as well as providing a port of the Rust standard library.
