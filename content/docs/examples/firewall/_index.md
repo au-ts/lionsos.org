@@ -13,8 +13,9 @@ protocol, and permits or denies the traffic based on a set of build and run-time
 configurable rules. The firewall also acts as a router and can forward traffic
 to its next-hop based on a build and run-time configurable routing table. There
 are further networking functionalities the firewall is capable of detailed
-below. A list of issues and missing features of the firewall we hope to continue
-working on can be found
+below. The firewall example is currently fairly rudimentary, and we [invite the
+community](./contributing.md) to help complete it. A list of issues and missing
+features of the firewall can be found
 [here](https://github.com/au-ts/lionsos/issues?q=state%3Aopen%20label%3A%22firewall%22).
 
 

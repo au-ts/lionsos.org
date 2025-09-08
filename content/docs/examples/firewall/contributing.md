@@ -7,8 +7,9 @@ title: "Contributing"
 # Contributing to the firewall
 
 Currently the firewall example is in early stages of development, missing many
-of the basic features expected of a firewall. We hope to open the project to
-external contributers to help improve its functionality and usability.
+of the basic features expected of a firewall. We consider this a community
+project and are inviting interested people to contribute to it and help improve
+its functionality and usability.
 
 We have an extensive list of GitHub
 [issues](https://github.com/au-ts/lionsos/issues?q=is%3Aissue%20state%3Aopen%20label%3Afirewall)
