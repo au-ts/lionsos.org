@@ -65,19 +65,19 @@ Run the following commands depending on your machine:
 {{% tab "Linux (x64)" %}}
 
 ```sh
-wget https://lionsos.org/microkit-sdk-{{< microkit_version_firewall >}}-linux-x86-64.tar.gz
+wget https://trustworthy.systems/Downloads/microkit/microkit-sdk-{{< microkit_version_firewall >}}-linux-x86-64.tar.gz
 tar xf microkit-sdk-{{< microkit_version_firewall >}}-linux-x86-64.tar.gz
 ```
 {{% /tab %}}
 {{% tab "macOS (ARM64)" %}}
 ```sh
-wget https://lionsos.org/microkit-sdk-{{< microkit_version_firewall >}}-macos-aarch64.tar.gz
+wget https://trustworthy.systems/Downloads/microkit/microkit-sdk-{{< microkit_version_firewall >}}-macos-aarch64.tar.gz
 tar xf microkit-sdk-{{< microkit_version_firewall >}}-macos-aarch64.tar.gz
 ```
 {{% /tab %}}
 {{% tab "macOS (x64)" %}}
 ```sh
-wget https://lionsos.org/microkit-sdk-{{< microkit_version_firewall >}}-macos-x86-64.tar.gz
+wget https://trustworthy.systems/Downloads/microkit/microkit-sdk-{{< microkit_version_firewall >}}-macos-x86-64.tar.gz
 tar xf microkit-sdk-{{< microkit_version_firewall >}}-macos-x86-64.tar.gz
 ```
 {{% /tab %}}
