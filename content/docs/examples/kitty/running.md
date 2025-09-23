@@ -54,7 +54,10 @@ If you are running the Kitty example on QEMU, and running the server on your hos
 machine, then use the IP address `10.0.2.2`. This is the gateway IP address from QEMU
 to your host machine.
 
-Below is an example of running the Kitty example:
+If you have chosen to use a `deploy.py` script as outlined in the building section,
+you will skip the following step.
+
+Below is an example of running the Kitty example (without the deploy script):
 
 ```python
 >>> import kitty
@@ -65,7 +68,7 @@ Usage: kitty.run(String IP_ADDRESS).
 >>> kitty.run("10.0.2.2")
 ```
 
-After executing the `kitty.run` command, you should see output on the display like so:
+After executing the `kitty.run` command or the `deploy.py` script, you should see output on the display like so:
 <img style="display: block; margin-left: auto; margin-right: auto" src="/kitty_display.png" alt="Picture of Kitty user interface" width="700"/>
 
 ## Using MicroPython

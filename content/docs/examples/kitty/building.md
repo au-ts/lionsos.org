@@ -74,6 +74,28 @@ tar xf microkit-sdk-{{< microkit_version >}}-macos-x86-64.tar.gz
 {{% /tab %}}
 {{% /tabs %}}
 
+## Deployable Kitty
+If you wish to deploy an image of the kitty, where you do not need to interact
+with the REPL in order to execute it, you can do the following:
+```sh
+export DEPLOY=1
+```
+This will set the python module that micropython initially executes to `deploy.py`.
+You will need to create this file in the root directory of the kitty example.
+
+The following is an example of what you might want in `deploy.py`:
+
+```py
+import kitty
+
+print("We are starting Kitty for deployment!")
+
+kitty.run("<ip_address_of_kitty_server>")
+```
+
+The `deploy.py` that we use internally at Trustworthy Systems can be
+found at: `examples/kitty/client/deploy.py`.
+
 ## Compiling the Kitty system
 
 The Kitty system, when running, takes files from an NFSv3 server.  The
@@ -90,6 +112,8 @@ export MICROKIT_BOARD=qemu_virt_aarch64
 export NFS_SERVER=<ip address of NFS server>
 # NFS export to mount
 export NFS_DIRECTORY=/path/to/dir
+# (Optional) Build deployable version
+export DEPLOY=1
 # Compile the system
 make
 ```
@@ -104,6 +128,8 @@ export MICROKIT_BOARD=odroidc4
 export NFS_SERVER=<ip address of NFS server>
 # NFS export to mount
 export NFS_DIRECTORY=/path/to/dir
+# (Optional) Build deployable version
+export DEPLOY=1
 # Compile the system
 make
 ```
