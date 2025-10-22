@@ -20,20 +20,27 @@ features of the firewall can be found
 
 
 This page describes the system's architecture and details how it works, if you
-are interested in building and running it see the pages on:
+are interested in building, running or testing it see the pages on:
 * [Building](./building)
-* [Running](./running)
+* [Running on hardware](./running)
+* [Running on QEMU inside Docker](./docker)
+* [Testing](./testing)
 
 ## Supported platforms
 
-The system currently only works on the following platform, although we hope to
+The system currently works on the following platforms, although we hope to
 [expand this in the future](https://github.com/au-ts/lionsos/issues/195):
+* QEMU virt AArch64
 * Compulab IOT-GATE-IMX8PLUS
 
-Since we currently only support real hardware, to test the firewall system you
-will also need to configure subnets and network nodes for each network
-interface. For details on this, please see the section on [running the
-firewall](./running).
+The simplest way to get started with testing and developing the firewall is to
+run it on QEMU inside our custom ubuntu Docker container, which emulates the
+required network infrastructure. Instructions on setting up the container can be
+found in the section on [running on QEMU inside Docker](./docker).
+
+If you are are using real hardware to test the firewall system, you will need to
+configure subnets and hosts for each network interface. More details on this can
+be found in the section on [running on hardware](./running).
 
 ## Architecture
 
@@ -71,7 +78,7 @@ transmit data buffers between components. sDDF net queues are used when buffers
 are to be returned to the same component they are received from. In a typical
 sDDF net system this is always the case, however the firewall often requires
 components to return buffers to different components. sDDF net queues also use a
-signaling protocol to decide when to signal their neighbouring component. More
+signalling protocol to decide when to signal their neighbouring component. More
 on sDDF net queues can be found
 [here](https://trustworthy.systems/projects/drivers/sddf-design-latest.pdf).
 
@@ -82,7 +89,7 @@ however it is only one-way. This allows components like the [firewall transmit
 virtualiser](#firewall-network-components) to receive buffers from the router,
 and return them back to the [firewall receive
 virtualiser](#firewall-network-components) upon transmission. Firewall queues,
-along with all the following queues, do not use a signaling protocol to
+along with all the following queues, do not use a signalling protocol to
 determine when to signal, and instead components signal their neighbour every
 time a batch of buffers has been enqueued.
 
@@ -125,7 +132,7 @@ handled differently.
 
 The Rx virtualiser has additionally been modified to multiplex based on a
 packet's Ethernet type or IPv4 protocol number, rather than the sDDF network Rx
-viurtualiser which uses destination MAC address. Packets are forwarded to the
+virtualiser which uses destination MAC address. Packets are forwarded to the
 corresponding [ARP](#arp-components) or [filter](#filters) component depending
 on the match. The following diagram illustrates how the Rx virtualiser is
 connected to its neighbours which it forwards packets to (not pictured is how
@@ -384,3 +391,13 @@ a high frequency, this significantly simplifies the interface. The webserver has
 all filter rules and routing tables mapped into its address space read-only,
 which allows them to efficiently be displayed without disrupting the flow of
 traffic through the system. A PPC is only required for modification.
+
+The following images show the GUI pages for viewing and updating routing table
+routes and the ICMP filter's rules:
+
+<img style="display: block; margin-left: auto; margin-right: auto"
+src="/firewall_webgui_router.png" alt="Webserver GUI routing table page" width="500" />
+
+
+<img style="display: block; margin-left: auto; margin-right: auto"
+src="/firewall_webgui_icmprules.png" alt="Webserver GUI ICMP filter page" width="700" />

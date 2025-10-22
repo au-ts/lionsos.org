@@ -22,7 +22,7 @@ our implementation. Issues with the firewall example are all tagged with the
   system, see
   [here](https://github.com/au-ts/lionsos/issues?q=is%3Aissue%20state%3Aopen%20label%3Afirewall%20label%3A%22minor%20improvement%22).
 - `major improvement`: Refers to an improvement that could be made to the
-  firewall which would require a larger number of changes, often accross more
+  firewall which would require a larger number of changes, often across more
   than one class of components, see
   [here](https://github.com/au-ts/lionsos/issues?q=is%3Aissue%20state%3Aopen%20label%3Afirewall%20label%3A%22major%20improvement%22).
 - `enhancement`: Refers to an entirely missing functionality of the firewall,
