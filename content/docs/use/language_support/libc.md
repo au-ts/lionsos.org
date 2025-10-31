@@ -1,11 +1,11 @@
 ---
 weight: 1
 bookFlatSection: false
-title: "Standard Library (libc) Usage Guidance"
+title: "libc"
 ---
 
 
-# LionsOS libc Integration
+# libc
 
 This page explains the LionsOS libc implementation and how to configure and
 build it using the provided Makefile snippet.
@@ -24,6 +24,23 @@ redirected to a general dispatcher.
 2. Syscall implementations: Functionality found in `lib/libc/posix/`.
 3. Compiler runtime helpers: Low-level arithmetic and runtime support from
 `lib/libc/compiler_rt/`.
+
+### Available Functionality
+
+Syscall implementation is not comprehensive. Below is a summary of what can be 
+expected to work.
+
+- Standard I/O: `STDOUT` and `STDERR` are opened by default on the expected file
+descriptors and will output to a connected serial subsystem, enabling `printf`.
+- File System: Standard operations `open`/`openat`, `read`/`readv`,
+`write`/`writev`, `lseek`, and `close` are available for regular files, as well
+as `fstat`/`fstatat`. Directories can be created with `mkdirat`.
+- Networking: Client-related socket operations are supported. Sockets can be 
+created with `socket`, used to `connect` to a server, `sendto` data, and
+`recvfrom` data. Additional networking support is currently being worked on.
+- Memory: Basic heap management is available via `brk`.
+- Other: An insecure implementation of `getrandom` (based on `rand`) is 
+available.
 
 ## musllibc Fork: Syscall Redirection
 
@@ -63,7 +80,7 @@ void libc_init() {
 To build the LionsOS libc, include the `lib/libc/libc.mk` snippet in your
 top-level Makefile:
 
-```make
+```
 include $(LIONSOS)/lib/libc/libc.mk
 ```
 
@@ -75,12 +92,13 @@ libc. This is also a build target for musllibc, allowing you to specify the
 headers as a build prerequisite.
 - `$(LIONS_LIBC)/lib/libc.a`: The final static libc archive combining musl,
 syscalls, and compiler runtime objects. This must be linked into your final
-binary.
+binary. Please note that libmath (`libm.a`) is bundled with our `libc.a`, so
+there is no need to link to this explicitly.
 
 For sDDF components, **do not** set `SDDF_CUSTOM_LIBC`. Instead, define the
 following:
 
-```make
+```
 SDDF_LIBC_INCLUDE := $(LIONS_LIBC)/include
 include <path_to_sddf_snippet.mk>
 ```

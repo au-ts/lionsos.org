@@ -36,8 +36,8 @@ We do not necessarily *want* to use the full extent of a libc (in particular slo
 the asynchronous APIs that we mostly use.
 
 Currently, we provide a libc for LionsOS systems based on a [fork](https://github.com/au-ts/musllibc/tree/lionsos) of
-[musllibc](https://musl.libc.org/). For more information, please see the
-[Standard Library (libc) Usage Guidance](/docs/use/language_support/libc).
+[musllibc](https://musl.libc.org/). For more information, please see the page on
+[libc](/docs/use/language_support/libc) usage guidance.
 
 ## MicroPython
 
