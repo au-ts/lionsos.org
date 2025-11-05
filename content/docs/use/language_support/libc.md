@@ -14,10 +14,11 @@ build it using the provided Makefile snippet.
 
 LionsOS uses a custom libc setup based on our
 [fork](https://github.com/au-ts/musllibc/tree/lionsos) of
-[musllibc](https://musl.libc.org/), plus extra components for POSIX support and
-compiler runtime helpers. This setup is compatible with the sDDF build system.
+[musllibc](https://musl.libc.org/). We also provide implementations of a POSIX
+subset and vendored compiler runtime helpers. This setup is compatible with the
+sDDF build system.
 
-The final libc is built from three main sources:
+The final `libc.a` is built from three main sources:
 
 1. musllibc (our fork): Provides core libc functionality, with system calls
 redirected to a general dispatcher.
@@ -103,12 +104,17 @@ SDDF_LIBC_INCLUDE := $(LIONS_LIBC)/include
 include <path_to_sddf_snippet.mk>
 ```
 
+More information on `SDDF_LIBC_INCLUDE` can be found in the 
+[sDDF docs](https://github.com/au-ts/sddf/blob/main/docs/libc.md#external-libc-os-provided).
+Note that the LionsOS `libc.mk` automatically adds the headers to `CFLAGS` as an
+include path so there is no need to do this explicitly.
+
 This ensures sDDF components use the LionsOS library headers instead of falling
 back to sDDF's internal, vendored libc. Since sDDF components list this as a
 prerequisite, it also guarantees the headers are available *before* compilation
 begins.
 
-## POSIX and Compiler Runtime Extensions
+## POSIX Implementations and Compiler Runtime Support
 
 The extra functionality is provided via:
 - `lib/libc/posix/*.c`: POSIX wrappers and syscall implementations.
