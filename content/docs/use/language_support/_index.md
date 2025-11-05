@@ -1,6 +1,6 @@
 ---
 weight: 3
-bookFlatSection: false
+bookCollapseSection: true
 title: "Language Support"
 ---
 
@@ -35,9 +35,9 @@ We do not necessarily *want* to use the full extent of a libc (in particular slo
 `read` and `write`) but understand that large or legacy clients cannot reasonably change to use
 the asynchronous APIs that we mostly use.
 
-Our [current plan](https://github.com/au-ts/lionsos/issues/48) is to create a libc for LionsOS-based
-system using the [picolibc](https://github.com/picolibc/picolibc) project, but at the moment
-we use a fork of [musllibc](https://github.com/au-ts/musllibc).
+Currently, we provide a libc for LionsOS systems based on a [fork](https://github.com/au-ts/musllibc/tree/lionsos) of
+[musllibc](https://musl.libc.org/). For more information, please see the page on
+[libc](/docs/use/language_support/libc) usage guidance.
 
 ## MicroPython
 
