@@ -189,14 +189,14 @@ ips = ["172.16.2.1",  # External network
 #### Data structure sizes and capacities
 
 Data structure sizes and capacities are encoded using the
-`FirewallMemoryRegions` class. Currently all instances of this class are
+`FirewallMemoryRegions` and `DataStructureTypeInfo` class. Currently all instances of this class are
 declared at the top of the metaprogram, with the first as follows:
 
 ```py
 # Firewall memory region object declarations, update region capacities here
-dma_buffer_queue_region = FirewallMemoryRegions("fw_buffer_queue_entry_size",
-                                                512,
-                                                lambda x: 16 + x.capacity * x.entry_size)
+fw_queue_wrapper = DataStructureTypeInfo(elf_name="routing.elf", c_name="fw_queue");
+dma_buffer_queue = DataStructureTypeInfo(elf_name="routing.elf", c_name="net_buff_desc", capacity=512)
+dma_buffer_queue_region = FirewallMemoryRegions(dependent_type_info=[fw_queue_wrapper,dma_buffer_queue])
 ```
 
 The `FirewallMemoryRegions` class is a rudimentary attempt to simplify the
@@ -206,29 +206,36 @@ as the structs being used as array elements tend to change frequently, and each
 time they change the size of the memory region used to hold them needs to be
 recalculated.
 
-Our current solution to simplify this process is to extract the size of the
-relevant structs from C variables defined in the routing component
-`examples/firewall/routing/routing.c`, although we are [in the
-process](https://github.com/au-ts/lionsos/issues/234) of updating this approach
-to read the size of the struct directly from debug information in the `.elf`
-file.
+To address this issue, we parse the elf file's dwarf information directly. From the elf
+we obtain the size of the relevant structure's directly including any required alignment. Typically a single memory region is composed of several items, these components are encoded in the `DataStructureTypeInfo` class. 
 
-The `FirewallMemoryRegions` class instance variables work as follows:
+The default behaviour is for the `FirewallMemoryRegions` to be either constructed
+with a known fixed size or be provided a list of `DataStructureTypeInfo` classes. Then to compute the size of the `FirewallMemoryRegions` size we either parse the ELF file defined in the `DataStructureTypeInfo` or use the provided size/capacity directly.
+
+The `FirewallMemoryRegions` and `DataStructureTypeInfo` class instance variables work as follows:
 
 ```py
-FirewallMemoryRegions(c_name, capacity, region_size_formula, entry_size = 0, region_size = 0)
+FirewallMemoryRegions(unaligned_size = None, dependent_type_info: List[DataStructureTypeInfo]|None = None, region_size_formula = lambda list: sum(item.get_size() for item in list))
 ```
-- `c_name`: The name of the variable in `routing.elf` that contains the size of
-  the array entry.
-- `capacity`: The capacity of the array to be held in this region.
-- `region_size_formula`: The formula for calculating the size of the data
-  structure held in this region, typically based on entry size and capacity.
-  This is useful for shared data structures containing an array as well as
-  additional metadata information.
+- `unaligned_size`: If known we can provided the size of an entire region.
+- `dependent_type_info`: If required an optional list of sub type components for the whole region.
+- `region_size_formula`: IF unaligned_size not provided, the formula to combine the total size of all the sub types after elf parsing if require by default takes the sum of the subtypes provided.
+
+```py
+DataStructureTypeInfo(size: int|None = None, entry_size:int|None = None, capacity:int|None = None,
+        size_formula_bytes = lambda x: x.entry_size * x.capacity, elf_name = None, c_name = None)
+```
+- `size`: The total size of the region if known
 - `entry_size`: The size of an array entry. Either set on instantiation or
-  extracted from `routing.elf` using `c_name`.
-- `region_size`: The size of the region. Either set on instantiation or
-  calculated using the `region_size_formula`.
+- `capacity`: The capacity of the array to be held in this region.
+- `size_formula_bytes`: The formula for calculating the size of the data
+  structure held in this region, by default computes size = entry size * capacity.
+  This is useful for shared data structures containing an array as well as
+  additional metadata information. 
+  extracted from `elf_name` using `c_name`.
+- `elf_name`: The name of the elf file to find the dwarf information.
+- `c_name`: The name of the variable in `{elf_name}` that contains the size of
+  the array entry.
 
 ## Next steps
 
