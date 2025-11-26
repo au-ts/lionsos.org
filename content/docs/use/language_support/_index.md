@@ -75,3 +75,31 @@ it is fairly easy to write Rust programs for an seL4 environment.
 At this stage, we have only used Rust to write certain device drivers but
 are interested in providing Rust bindings for LionsOS APIs in the future
 as well as providing a port of the Rust standard library.
+
+## WebAssembly (WASM)
+LionsOS includes experimental support for running WebAssembly applications.
+This is achieved by porting the
+[wasm-micro-runtime](https://github.com/bytecodealliance/wasm-micro-runtime) to
+LionsOS, allowing WASM modules to execute inside a LionsOS component.
+
+Currently, our focus is on applications targeting
+[WASI](https://github.com/WebAssembly/WASI), as WAMR provides a POSIX-based
+implementation of WASI APIs. This makes WASM a useful driver for building out
+LionsOS's libc and POSIX functionality. An example system demonstrates basic
+file system and networking access from a WASM application running under WAMR.
+
+Each WASM component in a LionsOS system links to its own copy of the runtime,
+allowing the Microkit and system design to enforce isolation.
+
+At present:
+- Execution is limited to interpreter mode, but support for JIT and AOT
+compilation is planned.
+- Any WASM module can theoretically run, provided the required host functions
+are provided and imported.
+- Integration is highly experimental and primarily intended for research and
+development.
+
+Looking ahead, we aim to:
+- Provide deeper LionsOS-native bindings for WASM components.
+- Explore asynchronous interfaces as WASI evolves, enabling more efficient
+interaction with LionsOS APIs.
