@@ -176,66 +176,130 @@ metaprogram:
 ext_net = 0
 int_net = 1
 
-macs = [[0x00, 0x01, 0xc0, 0x39, 0xd5, 0x18], # External network
-        [0x00, 0x01, 0xc0, 0x39, 0xd5, 0x10]] # Internal network
+macs = [
+    [0x00, 0x01, 0xC0, 0x39, 0xD5, 0x18],  # External network
+    [0x00, 0x01, 0xC0, 0x39, 0xD5, 0x10],  # Internal network
+]
 
-subnet_bits = [12, # External network
-               24] # Internal network
+subnet_bits = [12, 24]  # External network, Internal network
 
-ips = ["172.16.2.1",  # External network
-       "192.168.1.1"] # Internal network
+ips = ["172.16.2.1", "192.168.1.1"]  # External network, Internal network
 ```
 
 #### Data structure sizes and capacities
 
 Data structure sizes and capacities are encoded using the
-`FirewallMemoryRegions` and `DataStructureTypeInfo` class. Currently all instances of this class are
-declared at the top of the metaprogram, with the first as follows:
+`FirewallMemoryRegions` and `FirewallDataStructure` classes. Currently all
+instances of these classes are declared at the top of the metaprogram, with the
+first as follows:
 
 ```py
-# Firewall memory region object declarations, update region capacities here
-fw_queue_wrapper = DataStructureTypeInfo(elf_name="routing.elf", c_name="fw_queue");
-dma_buffer_queue = DataStructureTypeInfo(elf_name="routing.elf", c_name="net_buff_desc", capacity=512)
-dma_buffer_queue_region = FirewallMemoryRegions(dependent_type_info=[fw_queue_wrapper,dma_buffer_queue])
+# Firewall memory region and data structure object declarations, update region capacities here
+fw_queue_wrapper = FirewallDataStructure(elf_name="routing.elf", c_name="fw_queue")
+
+dma_buffer_queue = FirewallDataStructure(
+    elf_name="routing.elf", c_name="net_buff_desc", capacity=512
+)
+dma_buffer_queue_region = FirewallMemoryRegions(
+    data_structures=[fw_queue_wrapper, dma_buffer_queue]
+)
 ```
 
-The `FirewallMemoryRegions` class is a rudimentary attempt to simplify the
-generation of Microkit memory regions to hold shared firewall data structures,
-most of which are arrays of structs. This can be challenging during development
-as the structs being used as array elements tend to change frequently, and each
-time they change the size of the memory region used to hold them needs to be
-recalculated.
+These classes aim to simplify the process of creating the Microkit memory
+regions needed to hold firewall data structures. Typically each memory region
+contains one or more arrays of structs, and a collection of corresponding
+metadata variables (like head and tail pointers) also held in structs. This
+poses a challenge during development as the elements within these structs tend
+to change frequently, and each time they change the size of the memory region
+used to hold them needs to be recalculated.
 
-To address this issue, we parse the elf file's dwarf information directly. From the elf
-we obtain the size of the relevant structure's directly including any required alignment. Typically a single memory region is composed of several items, these components are encoded in the `DataStructureTypeInfo` class. 
+To address this issue, we extract the size of these structs automatically by
+parsing the dwarf information of an elf file containing their definitions. This
+leaves the more complicated aspects of type sizing like struct alignment to the
+build system. Firewall defined types are encoded in the `FirewallDataStructure`
+class, which can then be used as building blocks for constructing a
+`FirewallMemoryRegions` object.
 
-The default behaviour is for the `FirewallMemoryRegions` to be either constructed
-with a known fixed size or be provided a list of `DataStructureTypeInfo` classes. Then to compute the size of the `FirewallMemoryRegions` size we either parse the ELF file defined in the `DataStructureTypeInfo` or use the provided size/capacity directly.
+`FirewallMemoryRegions` objects can be constructed in this 'building-block'
+fashion by proving a list of `FirewallDataStructure` objects, or this can be
+bypassed and a known fixed size can be provided. One the required size of the
+region is known, it is used as the minimum region size and the final region size
+is calculated by rounding up to the nearest page size.
 
-The `FirewallMemoryRegions` and `DataStructureTypeInfo` class instance variables work as follows:
+The `FirewallMemoryRegions` and `FirewallDataStructure` class instance variables
+work as follows:
 
 ```py
-FirewallMemoryRegions(unaligned_size = None, dependent_type_info: List[DataStructureTypeInfo]|None = None, region_size_formula = lambda list: sum(item.get_size() for item in list))
+class FirewallMemoryRegions:
+    def __init__(
+        self,
+        *,
+        min_size: int = 0,
+        data_structures: List[FirewallDataStructure] = [],
+        size_formula=lambda list: sum(item.size for item in list),
+    ):
 ```
-- `unaligned_size`: If known we can provided the size of an entire region.
-- `dependent_type_info`: If required an optional list of sub type components for the whole region.
-- `region_size_formula`: IF unaligned_size not provided, the formula to combine the total size of all the sub types after elf parsing if require by default takes the sum of the subtypes provided.
+- `min_size`: If provided, this size will bypass the `FirewallDataStructure`
+  mechanism, and this value will be used for the minimum size of the region.
+- `data_structures`: If `min_size` is not provided, this list, along with the
+  size formula, will be used to calculate the minimum size. In particular, the
+  size of each element in this list will be combined using the `size_formula`.
+- `size_formula`: If `min_size` is not provided, this formula will be used to
+  calculate the minimum size using the list of internal data structure. The
+  formula should take this list as its only argument, and produce a minimum
+  size. If a list is provided but a formula is not, a default formula of taking
+  the sum of the size of each data structure will be use.
 
 ```py
-DataStructureTypeInfo(size: int|None = None, entry_size:int|None = None, capacity:int|None = None,
-        size_formula_bytes = lambda x: x.entry_size * x.capacity, elf_name = None, c_name = None)
+class FirewallDataStructure:
+    def __init__(
+        self,
+        *,
+        size: int = 0,
+        entry_size: int = 0,
+        capacity: int = 1,
+        size_formula=lambda x: x.entry_size * x.capacity,
+        elf_name=None,
+        c_name=None,
+    ):
 ```
-- `size`: The total size of the region if known
-- `entry_size`: The size of an array entry. Either set on instantiation or
-- `capacity`: The capacity of the array to be held in this region.
-- `size_formula_bytes`: The formula for calculating the size of the data
-  structure held in this region, by default computes size = entry size * capacity.
-  This is useful for shared data structures containing an array as well as
-  additional metadata information. 
-  extracted from `elf_name` using `c_name`.
-- `elf_name`: The name of the elf file to find the dwarf information.
-- `c_name`: The name of the variable in `{elf_name}` that contains the size of
-  the array entry.
+- `size`: The total size of the region if known. If this is provided, both the
+  elf extraction phase and size calculation phase will be bypassed.
+- `entry_size`: The size of an array entry. This can either set on instantiation
+  or extracted from the `elf_name` elf file by searching for the type given by
+  `c_name`.
+- `capacity`: The capacity of the data structure, used in the case that the
+  instance represents an array. This defaults to 1 in the case that the instance
+  is just a single struct.
+- `size_formula`: The formula used to calculate the overall size of the
+  structure from the entry size and capacity. The formula takes an object of the
+  class as a single argument and outputs a size. The default formula assumes
+  that the size is given by the product of entry size and capacity.
+- `elf_name`: The name of the elf file to find the dwarf type information.
+- `c_name`: The name of the c struct type of the data structure. For example,
+  when extracting the `fw_arp_entry` type, the c_name to use is `fw_arp_entry`,
+  as shown in the code snippets below.
+
+```py
+arp_cache_buffer = FirewallDataStructure(
+    elf_name="arp_requester.elf", c_name="fw_arp_entry", capacity=512
+)
+```
+
+```c
+typedef struct fw_arp_entry {
+    /* state of this entry */
+    uint8_t state;
+    /* IP address */
+    uint32_t ip;
+    /* MAC of IP if IP is reachable */
+    uint8_t mac_addr[ETH_HWADDR_LEN];
+    /* bitmap of clients that initiated the request */
+    uint8_t client;
+    /* number of arp requests sent for this IP address */
+    uint8_t num_retries;
+} fw_arp_entry_t;
+```
 
 ## Next steps
 
