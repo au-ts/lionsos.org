@@ -28,20 +28,23 @@ redirected to a general dispatcher.
 
 ### Available Functionality
 
-Syscall implementation is not comprehensive. Below is a summary of what can be 
-expected to work.
+Syscall implementation covers a subset of POSIX sufficient for many embedded
+applications. Below is a summary of available functionality.
 
 - Standard I/O: `STDOUT` and `STDERR` are opened by default on the expected file
-descriptors and will output to a connected serial subsystem, enabling `printf`.
-- File System: Standard operations `open`/`openat`, `read`/`readv`,
-`write`/`writev`, `lseek`, and `close` are available for regular files, as well
-as `fstat`/`fstatat`. Directories can be created with `mkdirat`.
-- Networking: Client-related socket operations are supported. Sockets can be 
-created with `socket`, used to `connect` to a server, `sendto` data, and
-`recvfrom` data. Additional networking support is currently being worked on.
-- Memory: Basic heap management is available via `brk`.
-- Other: An insecure implementation of `getrandom` (based on `rand`) is 
-available.
+descriptors and output to a connected serial subsystem, enabling `printf`.
+- File System: Standard operations `openat`, `read`/`readv`, `write`/`writev`,
+`lseek`, `close`, `fstat`/`fstatat`, `mkdirat`, and `unlinkat` are available.
+Symbolic links are not supported.
+- Networking: TCP sockets (IPv4 only) are supported for both client and server
+applications, including `socket`, `bind`, `listen`, `accept`, `connect`,
+`sendto`, `recvfrom`, `getsockname`, `getpeername`, and `ppoll` (timeout and
+sigmask are ignored). UDP is not supported.
+- Time: `clock_gettime` (monotonic) and `nanosleep` are available.
+- Memory: Heap allocation via `brk` and anonymous `mmap`, drawing from a static
+1MB pool. Memory cannot be freed.
+- Other: `getrandom` provides pseudo-random data (insecure, uses `rand`).
+`fcntl` supports `F_GETFL`/`F_SETFL` for non-blocking I/O.
 
 ## musllibc Fork: Syscall Redirection
 
@@ -104,7 +107,7 @@ SDDF_LIBC_INCLUDE := $(LIONS_LIBC)/include
 include <path_to_sddf_snippet.mk>
 ```
 
-More information on `SDDF_LIBC_INCLUDE` can be found in the 
+More information on `SDDF_LIBC_INCLUDE` can be found in the
 [sDDF docs](https://github.com/au-ts/sddf/blob/main/docs/libc.md#external-libc-os-provided).
 Note that the LionsOS `libc.mk` automatically adds the headers to `CFLAGS` as an
 include path so there is no need to do this explicitly.
