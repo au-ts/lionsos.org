@@ -85,9 +85,10 @@ LionsOS, allowing WASM modules to execute inside a LionsOS component.
 Currently, our focus is on applications targeting
 [WASI](https://github.com/WebAssembly/WASI), as WAMR provides a POSIX-based
 implementation of WASI APIs. This makes WASM a useful driver for building out
-LionsOS's libc and POSIX functionality. An example system demonstrates file
-system access (via FAT) and TCP networking (IPv4) from a WASM application
-running under WAMR.
+LionsOS's libc and POSIX functionality. A
+[test system](https://github.com/au-ts/lionsos/tree/main/examples/wasm_test)
+demonstrates file system access (via FAT) and TCP networking (IPv4) from a WASM
+application running under WAMR.
 
 WASM modules should be compiled using the
 [WASI SDK](https://github.com/WebAssembly/wasi-sdk).
@@ -99,7 +100,8 @@ the LionsOS FS protocol
 - Memory: Anonymous memory allocation
 
 Each WASM component in a LionsOS system links to its own copy of the runtime,
-allowing the Microkit and system design to enforce isolation.
+leveraging seL4 to enforce isolation between the different native or WASM
+applications.
 
 At present:
 - Execution is limited to interpreter mode, but support for JIT and AOT
