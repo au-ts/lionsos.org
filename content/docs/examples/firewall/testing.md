@@ -12,7 +12,9 @@ however similar commands and tests can be used for a real hardware setup. The
 commands described on this page can all be found in the `testing.sh` script in
 the Docker scripts directory `examples/firewall/docker/scripts`. These commands
 use environment variables set in `firewall_configuration.sh`. If you are running
-the commands inside the container, these variables should already be set.
+the commands inside the container, these variables should already be set. In
+addition, an `autotest.sh` script is available to automate some of these
+procedures.
 
 ## Executing from namespaces
 
@@ -179,3 +181,96 @@ ip netns exec int tcpdump -eX -i int-br1
 Using these commands allows you to trace traffic through the virtual network,
 and can be particularly useful if you find your traffic getting _stuck_
 somewhere.
+
+## Automated testing
+
+An automated testing script is available in the `docker/scripts` directory; it
+performs much of the testing described above.
+
+### Running the script
+
+Prerequisites:
+- Firewall is running and configured as specified [here](../docker)
+
+First, in the Docker container shell, change your working directory to the
+script's location: `examples/firewall/docker/scripts`.
+
+Once there, we can execute
+
+```sh
+./autotest.sh
+```
+
+and the test suite will run.
+
+```
+root@cf16edbaa57a:/mnt/lionsOS/examples/firewall/docker/scripts# ./autotest.sh 
+
+-- Running firewall tests...
+
+test_icmp_ping_host_internal_to_external
+test_icmp_ping_host_external_to_internal
+test_icmp_ping_unreachable_host_internal_to_external
+test_icmp_ping_unreachable_host_external_to_internal
+test_icmp_ping_firewall_from_internal_network
+skipping... (feature not implemented yet)
+test_icmp_ping_firewall_from_external_network
+skipping... (feature not implemented yet)
+test_tcp_internal_to_external
+test_tcp_external_to_internal
+test_udp_internal_to_external
+test_udp_external_to_internal
+test_rule_application_and_removal
+
+Ran 11 tests.
+
+OK (skipped=2)
+```
+
+### Running specific tests
+
+Running the `autotest.sh` script on its own will execute all enabled tests;
+however, you can also specify one test
+
+```sh
+./autotest.sh -- test_icmp_ping_host_internal_to_external
+```
+
+or several
+
+```sh
+./autotest.sh -- test_tcp_internal_to_external test_tcp_external_to_internal
+test_udp_internal_to_external test_udp_external_to_internal
+```
+
+and only those tests will be executed.
+
+### Enabling firewall log output
+
+To enable firewall log output on test failure, edit `autotest.sh` and set
+`PRINT_LOG_ON_ERROR` to `true`. Before the log will be printed, you must 
+redirect the firewall's output to a known location. In the script's default
+configuration, the log is expected to be read from `/tmp/lionsos_firewall_log`.
+Output from the `qemu.sh` script can be redirected to this location, 
+
+```sh
+./qemu.sh > /tmp/lionsos_firewall_log
+```
+
+or you can use `tee` to simultaneously receive console output while updating the
+log file.
+
+```sh
+./qemu.sh | tee /tmp/lionsos_firewall_log
+```
+
+If firewall output has been redirected to the log file, setting
+`SAVE_SESSION_LOG_ON_EXIT` to `true` will cause a session log to be written to
+`SESSION_LOG` after the test suite has finished (the default location is
+`/tmp/lionsos_firewall_session_log`). By default, the session log will be
+clobbered at the start of each test suite run.
+
+### Additional configuration
+
+Several aspects of the script can be configured. These additional options are
+documented in the script's source code.
