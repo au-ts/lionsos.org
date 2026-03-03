@@ -105,8 +105,9 @@ transmit to.
 
 ICMP queues are one-way queues used between the [routers](#routing-components)
 and the [ICMP module](#icmp-module) to request that an ICMP packet should be
-sent. Currently the ICMP module has limited functionality, however we hope to
-[expand on this in the future](https://github.com/au-ts/lionsos/issues/194).
+sent. The ICMP module currently supports generating `destination unreachable`,
+`timeout`, and `reject` responses for UDP and ICMP traffic, and ping handling
+for hosts and the firewall itself.
 
 ### Other Shared Memory Structures
 
@@ -346,10 +347,9 @@ src="/internal_router.svg" alt="Internal router" width="500" />
 
 ### ICMP module
 
-Currently the ICMP module's only functionality is to handle the sending of ICMP
-`destination unreachable` packets back to senders when a route to a host cannot
-be found, however we [hope to expand this in the
-future](https://github.com/au-ts/lionsos/issues/194). Unlike most components,
+The ICMP module supports generating `destination unreachable`, `timeout`, and
+`reject` responses for UDP and ICMP traffic, and ping handling for hosts and
+the firewall itself. Unlike most components,
 there is only one ICMP module which is able to transmit out both NICs. The ICMP
 module also shares ICMP queues with all components that require the generation
 of ICMP packets. The diagram below demonstrates the current connections of the
@@ -393,7 +393,7 @@ which allows them to efficiently be displayed without disrupting the flow of
 traffic through the system. A PPC is only required for modification.
 
 The following images show the GUI pages for viewing and updating routing table
-routes and the ICMP filter's rules:
+routes, the ICMP filter's rules, and the firewall's ICMP ping setting:
 
 <img style="display: block; margin-left: auto; margin-right: auto"
 src="/firewall_webgui_router.png" alt="Webserver GUI routing table page" width="500" />
@@ -401,3 +401,6 @@ src="/firewall_webgui_router.png" alt="Webserver GUI routing table page" width="
 
 <img style="display: block; margin-left: auto; margin-right: auto"
 src="/firewall_webgui_icmprules.png" alt="Webserver GUI ICMP filter page" width="700" />
+
+<img style="display: block; margin-left: auto; margin-right: auto"
+src="/firewall_webgui_icmpping.png" alt="Webserver GUI ICMP ping page" width="700" />
