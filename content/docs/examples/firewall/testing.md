@@ -9,7 +9,11 @@ weight = 100
 This page describes how to test all the currently implemented functionalities of
 the firewall. We assume that you are using the QEMU Docker container setup,
 however similar commands and tests can be used for a real hardware setup. Many
-of the commands described on this page have been automated in the `autotest.sh` script in the the Docker scripts directory `examples/firewall/docker/scripts`. These commands use environment variables set in `firewall_configuration.sh`. If you are running the commands inside the container, these variables should already be set.
+of the commands described on this page have been automated in the `autotest.sh`
+script in the the Docker scripts directory `examples/firewall/docker/scripts`.
+These commands use environment variables set in `firewall_configuration.sh`.
+If you are running the commands inside the container, these variables should
+already be set.
 
 ## Executing from namespaces
 
