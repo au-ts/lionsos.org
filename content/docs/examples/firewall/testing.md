@@ -202,29 +202,11 @@ Once there, we can execute
 
 and the test suite will run.
 
-```
-root@cf16edbaa57a:/mnt/lionsOS/examples/firewall/docker/scripts# ./autotest.sh 
+### Demonstration
 
--- Running firewall tests...
-
-test_icmp_ping_host_internal_to_external
-test_icmp_ping_host_external_to_internal
-test_icmp_ping_unreachable_host_internal_to_external
-test_icmp_ping_unreachable_host_external_to_internal
-test_icmp_ping_firewall_from_internal_network
-skipping... (feature not implemented yet)
-test_icmp_ping_firewall_from_external_network
-skipping... (feature not implemented yet)
-test_tcp_internal_to_external
-test_tcp_external_to_internal
-test_udp_internal_to_external
-test_udp_external_to_internal
-test_rule_application_and_removal
-
-Ran 11 tests.
-
-OK (skipped=2)
-```
+<video width="100%" controls muted>
+  <source src ="/autotest.webm" type="video/webm">
+</video>
 
 ### Running specific tests
 
