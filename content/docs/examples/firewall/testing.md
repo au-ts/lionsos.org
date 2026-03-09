@@ -7,19 +7,27 @@ weight = 100
 # Testing the firewall
 
 This page describes how to test all the currently implemented functionalities of
-the firewall. We assume that you are using the QEMU Docker container setup,
-however similar commands and tests can be used for a real hardware setup. These
-commands use environment variables set in `firewall_configuration.sh`. If you
-are running the commands inside the container, these variables should already be
-set. Many of the procedures described on this page have been automated in the
-`autotest.sh` script, which can be found in the the Docker scripts directory
-`examples/firewall/docker/scripts`.
+the firewall. The tests are for the QEMU platform, to be run inside the provided
+[Docker container](../docker), however similar commands and tests can be used
+for a real hardware setup.
 
-## Executing from namespaces
+## Testing the QEMU image in Docker
 
-To force traffic to flow through the firewall, we created two isolated network
-namespaces named `ext` (external) and  `int` (internal). To execute a command
-from within a namespace, you prepend the command with the following prefixes:
+The following commands reference environment variables set using the
+configuration script `firewall_configuration.sh`. If you are running the
+commands inside the container, these variables should [already be
+set](../docker).
+
+Many of the tests described on this page have been automated using the
+`autotest.sh` script described [here](#automated-testing). The script itself can
+be found in the the Docker scripts directory `examples/firewall/docker/scripts`.
+
+### Executing from namespaces
+
+To force internally generated docker traffic to flow through the firewall, we
+create two isolated network namespaces named `ext` (external) and  `int`
+(internal). To execute a command from within a namespace, you prepend the
+command with the following prefixes:
 
 ```sh
 # Execute from ext namespace
@@ -29,9 +37,9 @@ ip netns exec ext
 ip netns exec int
 ```
 
-The external namespace has only two routes - a local subnet route and a default
-route which forwards all non-local traffic to the external interface of the
-firewall:
+Each namespace has only two routes - a local subnet route and a default route to
+the firewall's local gateway IP address. Thus, all non-local IP traffic is
+forwarded to firewall:
 
 ```sh
 root@db756615e5c4:/# ip netns exec ext ip route
@@ -43,12 +51,11 @@ Thus when the external namespace attempts to reach an IP belonging to the
 internal network, it will forward the traffic to the external IP of the
 firewall. The same setup applies for the internal namespace.
 
-## Forwarding traffic through the firewall
+### Forwarding traffic through the firewall
 
-Traffic can be sent through the firewall from the external network to the
-internal network, and vice versa. The following commands test the ability of the
-firewall to route and filter traffic between networks. This actually tests many
-components of the firewall including but not limited to:
+The following commands test the ability of the firewall to route and filter
+traffic between networks. This actually tests many components of the firewall
+including but not limited to:
 - The [ARP responder component](../#arp-responder), which must be replying
   correctly for the firewall's IP address to be matched to its MAC address
 - The corresponding [filter](../#filters) component, which must be applying its
@@ -62,7 +69,7 @@ components of the firewall including but not limited to:
 Additionally successful traffic flow also verifies that the ethernet drivers and
 network virtualisers are working correctly.
 
-### ICMP
+#### ICMP
 
 To forward a ping through the firewall, execute the following commands:
 
@@ -74,11 +81,12 @@ ip netns exec ext ping ${INT_HOST_IP}
 ip netns exec int ping ${EXT_HOST_IP}
 ```
 
-### TCP
+#### TCP
 
-To create a TCP connection between the two namespaces using `netcat`, you must
-have one namespace endpoint listen on a port, and the other initiate a
-connection on the same port:
+To test the forwarding of UDP and TCP traffic, we utilise the `netcat` program.
+To create a TCP connection between the two hosts on different namespaces one
+host must listen on a port, and the other must initiate a connection on the same
+port:
 
 ```sh
 # TCP: ext listens, int initiates
@@ -90,12 +98,12 @@ ip netns exec ext nc -l ${TEST_PORT}
 ip netns exec int nc ${EXT_HOST_IP} ${TEST_PORT}
 ```
 
-Once the connection is established, input entered into one terminal should come
-through as output on the other.
+Once the connection is established, input entered into one terminal should be received by the other host, and be outputted on the other terminal.
 
-### UDP
+#### UDP
 
-UDP is essentially the same as TCP, with an additional netcat `-u` flag:
+UDP is essentially the same as TCP, with an additional netcat `-u` flag
+specifying UDP:
 
 ```sh
 # UDP: ext listens, int initiates
@@ -107,12 +115,15 @@ ip netns exec ext nc -ul ${TEST_PORT}
 ip netns exec int nc -u ${EXT_HOST_IP} ${TEST_PORT}
 ```
 
-## ICMP destination unreachable
+### Testing the ICMP module
+
+#### Destination unreachable
 
 Currently the ICMP module is [only
 capable](https://github.com/au-ts/lionsos/issues/194) of sending `destination
-unreachable` packets when the destination IP address can't be resolved. To test
-this, you can attempt to ping an IP address that doesn't exist:
+unreachable` packets, which are sent to the source IP address of packets when
+the destination IP address of a packet can't be resolved. To test this, you can
+attempt to ping an IP address that doesn't exist:
 
 ```sh
 ip netns exec ext ping ${INT_BAD_HOST_IP}
@@ -136,10 +147,10 @@ From 172.16.2.1 icmp_seq=4 Destination Host Unreachable
 From 172.16.2.1 icmp_seq=5 Destination Host Unreachable
 ```
 
-## Monitoring traffic and debugging
+### Monitoring traffic and debugging
 
 Traffic can be monitored as it travels through the firewall through the use of
-debug printing, which by default is turned on. Each compoonent of the firewall
+debug printing, which by default is turned on. Each component of the firewall
 prints as it processes a packet with details of how the packet is being
 processed, as well as destination and source IP and MAC address.
 
@@ -181,12 +192,12 @@ Using these commands allows you to trace traffic through the virtual network,
 and can be particularly useful if you find your traffic getting _stuck_
 somewhere.
 
-## Automated testing
+### Automated testing
 
 An automated testing script is available in the `docker/scripts` directory; it
 performs much of the testing described above.
 
-### Running the script
+#### Running the script
 
 Prerequisites:
 - Firewall is running and configured as specified [here](../docker)
@@ -208,7 +219,7 @@ and the test suite will run.
   <source src ="/autotest.webm" type="video/webm">
 </video>
 
-### Running specific tests
+#### Running specific tests
 
 Running the `autotest.sh` script on its own will execute all enabled tests;
 however, you can also specify one test
@@ -226,7 +237,7 @@ test_udp_internal_to_external test_udp_external_to_internal
 
 and only those tests will be executed.
 
-### Enabling firewall log output
+#### Enabling firewall log output
 
 To enable firewall log output on test failure, edit `autotest.sh` and set
 `PRINT_LOG_ON_ERROR` to `true`. Before the log will be printed, you must 
@@ -251,7 +262,7 @@ If firewall output has been redirected to the log file, setting
 `/tmp/lionsos_firewall_session_log`). By default, the session log will be
 clobbered at the start of each test suite run.
 
-### Additional configuration
+#### Additional configuration
 
 Several aspects of the script can be configured. These additional options are
 documented in the script's source code.
