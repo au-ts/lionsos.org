@@ -22,12 +22,16 @@ Many of the tests described on this page have been automated using the
 `autotest.sh` script described [here](#automated-testing). The script itself can
 be found in the the Docker scripts directory `examples/firewall/docker/scripts`.
 
-### Executing from namespaces
+### Namespaces
 
 To force internally generated docker traffic to flow through the firewall, we
 create two isolated network namespaces named `ext` (external) and  `int`
-(internal). To execute a command from within a namespace, you prepend the
-command with the following prefixes:
+(internal). Each namespace has only two routes - a local subnet route and a
+default route to the firewall's local gateway IP address. Thus, all non-local IP
+traffic is forwarded to firewall.
+
+To execute a command from within a namespace, you prepend the command with the
+following prefixes:
 
 ```sh
 # Execute from ext namespace
@@ -37,9 +41,7 @@ ip netns exec ext
 ip netns exec int
 ```
 
-Each namespace has only two routes - a local subnet route and a default route to
-the firewall's local gateway IP address. Thus, all non-local IP traffic is
-forwarded to firewall:
+Namespace routes can be listed using the `ip route` command:
 
 ```sh
 root@db756615e5c4:/# ip netns exec ext ip route
@@ -47,9 +49,20 @@ default via 172.16.2.1 dev ext-br0
 172.16.0.0/12 dev ext-br0 proto kernel scope link src 172.16.2.200
 ```
 
-Thus when the external namespace attempts to reach an IP belonging to the
-internal network, it will forward the traffic to the external IP of the
-firewall. The same setup applies for the internal namespace.
+Namespace network interface information can be displayed using the `ifconfig`
+command:
+
+```sh
+root@db756615e5c4:/# ip netns exec ext ifconfig
+ext-br0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 172.16.2.200  netmask 255.240.0.0  broadcast 0.0.0.0
+        inet6 fe80::f0ad:22ff:feaa:4014  prefixlen 64  scopeid 0x20<link>
+        ether f2:ad:22:aa:40:14  txqueuelen 1000  (Ethernet)
+        RX packets 39  bytes 10754 (10.7 KB)
+        RX errors 0  dropped 0  overruns 0  frame 0
+        TX packets 59  bytes 16542 (16.5 KB)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+```
 
 ### Forwarding traffic through the firewall
 
