@@ -300,3 +300,44 @@ TEST_DATA='/tmp/firewall_test_data'
 USE_RANDOM_DATA=true
 SIZE_BYTES=4096
 ```
+
+#### Creating new tests
+
+As new functionality is added, new tests should be created. This provides some
+assurance that new changes don't have unforeseen consequences, which is
+particularly important for a complex system like the firewall.
+
+The `autotest.sh` script leverages the shUnit2 testing framework for setup,
+tear down and temporary file handling; the framework's documentation is
+available [here](https://github.com/kward/shunit2).
+
+To create a new test, a shell function that begins with the word `test` should
+be added to `autotest.sh`. When `autotest.sh` is first executed, a list of tests
+to execute is generated, which contains all of the functions that begin with the
+word `test`. A test is considered to have passed if its function returns a `0`
+exit status and failure otherwise. The last command or function executed within
+a test function will determine its exit status if an explicit return value is
+not provided.
+
+To indicate test failure, we use shUnit2's `fail` function, where its argument
+is a string containing the reason for test failure. For example,
+
+```sh
+fail 'This test has not succeeded.'
+```
+
+would result in
+
+```sh
+ASSERT: This test has not succeeded.
+```
+
+being output and would increase the test failure count (to be reported once all
+tests have executed). An important note is that executing `fail` does not exit
+the current test; we must explicitly `return` to stop executing a test, which is
+crucial if a test has several failure points. The `fail` function returns a
+non-zero exit status. The `print_log` function should typically follow each fail
+call so that firewall debug output can be displayed if enabled.
+
+For tests that involve waiting for a timeout of some kind, it is reccomended
+to notify the user of the typical duration using the `print_info` function.
