@@ -283,5 +283,20 @@ this is configurable).
 
 #### Additional configuration
 
-Several aspects of the script can be configured. These additional options are
-documented in the script's source code.
+Many aspects of the script can be configured (some examples include the test
+ports used, the duration of timeouts, the location of temporary files, and the
+display of network interface and route information on startup).
+
+These additional options are documented in the script's source code. For
+example, here are the options and documentation for data transmission tests:
+
+```sh
+# Test data
+#
+# For tests that transfer data, random data can be generated or fixed data
+# can be supplied. Setting `USE_RANDOM_DATA` to true will generate random
+# data at a specified `SIZE_BYTES`.
+TEST_DATA='/tmp/firewall_test_data'
+USE_RANDOM_DATA=true
+SIZE_BYTES=4096
+```
