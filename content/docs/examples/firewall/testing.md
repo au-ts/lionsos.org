@@ -213,7 +213,7 @@ performs much of the testing described above.
 #### Running the script
 
 Prerequisites:
-- Firewall is running and configured as specified [here](../docker)
+- Firewall is running within the Docker container as specified [here](../docker)
 
 First, in the Docker container shell, change your working directory to the
 script's location: `examples/firewall/docker/scripts`.
