@@ -340,8 +340,8 @@ being output and would increase the test failure count (to be reported once all
 tests have executed). An important note is that executing `fail` does not exit
 the current test; we must explicitly `return` to stop executing a test, which is
 crucial if a test has several failure points. The `fail` function returns a
-non-zero exit status. The `print_log` function should typically follow each fail
-call so that firewall debug output can be displayed if enabled.
+non-zero exit status. The `print_log` function should typically follow each
+`fail` call so that firewall debug output can be displayed if enabled.
 
 For tests that involve waiting for a timeout of some kind, it is reccomended
 to notify the user of the typical duration using the `print_info` function.
