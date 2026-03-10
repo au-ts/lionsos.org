@@ -226,8 +226,6 @@ Once there, we can execute
 
 and the test suite will run.
 
-### Demonstration
-
 <video width="100%" controls muted>
   <source src ="/autotest.webm" type="video/webm">
 </video>
