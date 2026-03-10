@@ -235,20 +235,19 @@ and the test suite will run.
 #### Running specific tests
 
 Running the `autotest.sh` script on its own will execute all enabled tests;
-however, you can also specify one test
+however, you can also run tests individually by specifying the test's name:
 
 ```sh
 ./autotest.sh -- test_icmp_ping_host_internal_to_external
 ```
 
-or several
+Alternatively, several tests' names can be specified, and only those tests will
+be executed:
 
 ```sh
 ./autotest.sh -- test_tcp_internal_to_external test_tcp_external_to_internal
 test_udp_internal_to_external test_udp_external_to_internal
 ```
-
-and only those tests will be executed.
 
 #### Enabling firewall log output
 
