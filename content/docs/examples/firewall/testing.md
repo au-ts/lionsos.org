@@ -227,7 +227,7 @@ Once there, we can execute
 and the test suite will run.
 
 <video width="100%" controls muted>
-  <source src ="/autotest.webm" type="video/webm">
+  <source src ="/firewall_autotest.mp4" type="video/mp4">
 </video>
 
 #### Running specific tests
@@ -246,6 +246,10 @@ be executed:
 ./autotest.sh -- test_tcp_internal_to_external test_tcp_external_to_internal
 test_udp_internal_to_external test_udp_external_to_internal
 ```
+
+<video width="100%" controls muted>
+  <source src ="/firewall_autotest_selective.mp4" type="video/mp4">
+</video>
 
 #### Enabling firewall log output
 
