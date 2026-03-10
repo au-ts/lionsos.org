@@ -251,11 +251,18 @@ test_udp_internal_to_external test_udp_external_to_internal
 
 #### Enabling firewall log output
 
-To enable firewall log output on test failure, edit `autotest.sh` and set
-`PRINT_LOG_ON_ERROR` to `true`. Before the log will be printed, you must 
+If the firewall has [debug printing](../building/#compiling-the-firewall-system)
+enabled, the debug messages that are generated during a test can be output on
+test failure.
+
+<img src="/firewall_autotest_failure.png"
+     alt="An image containing firewall log output following test failure.">
+
+To enable this feature, edit `autotest.sh` and set `PRINT_LOG_ON_ERROR` to
+`true` (note: this is the default). Before the log will be printed, you must
 redirect the firewall's output to a known location. In the script's default
 configuration, the log is expected to be read from `/tmp/lionsos_firewall_log`.
-Output from the `qemu.sh` script can be redirected to this location, 
+Output from the `qemu.sh` script can be redirected to this location,
 
 ```sh
 ./qemu.sh > /tmp/lionsos_firewall_log
@@ -268,11 +275,13 @@ log file.
 ./qemu.sh | tee /tmp/lionsos_firewall_log
 ```
 
-If firewall output has been redirected to the log file, setting
-`SAVE_SESSION_LOG_ON_EXIT` to `true` will cause a session log to be written to
-`SESSION_LOG` after the test suite has finished (the default location is
-`/tmp/lionsos_firewall_session_log`). By default, the session log will be
-clobbered at the start of each test suite run.
+If additional context is required, a session log can be generated, which
+contains the logs from all executed tests. Once firewall output has been
+redirected to the log file, setting `SAVE_SESSION_LOG_ON_EXIT` to `true` will
+cause a session log to be written to `SESSION_LOG` after the test suite has
+finished (the default location is `/tmp/lionsos_firewall_session_log`). (Note:
+The session log will be clobbered at the start of each test suite run; however,
+this is configurable).
 
 #### Additional configuration
 
