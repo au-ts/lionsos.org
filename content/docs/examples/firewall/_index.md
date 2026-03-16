@@ -103,11 +103,14 @@ transmit to.
 
 ### ICMP Queues
 
-ICMP queues are one-way queues used between the [routers](#routing-components)
-and the [ICMP module](#icmp-module) to request that an ICMP packet should be
-sent. The ICMP module currently supports generating `destination unreachable`,
-`timeout`, and `reject` responses for UDP and ICMP traffic, and ping handling
-for hosts and the firewall itself.
+ICMP queues are one-way queues between the [filters](#filters),
+[routers](#routing-components), and the [ICMP module](#icmp-module), used to
+request transmission of an ICMP packet. On behalf of routers, the ICMP module
+generates `destination unreachable` and `timeout` packets. On behalf of
+filters, it generates `reject` packets when a filter is configured to reject
+dropped traffic. The ICMP module also handles ping responses for each of the
+firewall's interfaces, with per-interface ping responses being configurable via
+the [webserver](#webserver).
 
 ### Other Shared Memory Structures
 
@@ -347,13 +350,27 @@ src="/internal_router.svg" alt="Internal router" width="500" />
 
 ### ICMP module
 
-The ICMP module supports generating `destination unreachable`, `timeout`, and
-`reject` responses for UDP and ICMP traffic, and ping handling for hosts and
-the firewall itself. Unlike most components,
-there is only one ICMP module which is able to transmit out both NICs. The ICMP
-module also shares ICMP queues with all components that require the generation
-of ICMP packets. The diagram below demonstrates the current connections of the
-module.
+The ICMP module is responsible for generating ICMP traffic on behalf of all
+components in the firewall that require it. Unlike most other components,
+there is only one ICMP module, which is able to transmit out both NICs.
+
+Upon finding that a packet's TTL has reached zero, or that a destination IP
+address cannot be reached (either because no route exists or because ARP
+resolution fails), the router requests that the ICMP module sends a `timeout`
+or `destination unreachable` packet back to the original sender.
+
+Some filters (e.g. UDP and ICMP) support a `reject` action. When traffic
+matches a reject rule, the filter drops the packet but also requests that the
+ICMP module send a `destination unreachable` (port unreachable) packet back to
+the original sender, informing them that the port is unavailable.
+
+The ICMP module also handles ping responses for each of the firewall's
+interfaces. It is the router's responsibility to identify when an incoming ICMP
+echo request is destined for one of the firewall's own IP addresses and forward
+it to the ICMP module. Whether the firewall responds to pings on a given
+interface is configurable at run-time via the [webserver](#webserver).
+
+The diagram below demonstrates the current connections of the module.
 
 <img style="display: block; margin-left: auto; margin-right: auto"
 src="/icmp_module.svg" alt="ICMP module" width="500" />
