@@ -25,7 +25,7 @@ be found in the the Docker scripts directory `examples/firewall/docker/scripts`.
 ### Namespaces
 
 To force internally generated docker traffic to flow through the firewall, we
-create two isolated network namespaces named `ext` (external) and  `int`
+create two isolated network namespaces named `ext` (external) and `int`
 (internal). Each namespace has only two routes - a local subnet route and a
 default route to the firewall's local gateway IP address. Thus, all non-local IP
 traffic is forwarded to firewall.
@@ -45,7 +45,7 @@ Namespace routes can be listed using the `ip route` command:
 
 ```sh
 root@db756615e5c4:/# ip netns exec ext ip route
-default via 172.16.2.1 dev ext-br0 
+default via 172.16.2.1 dev ext-br0
 172.16.0.0/12 dev ext-br0 proto kernel scope link src 172.16.2.200
 ```
 
@@ -69,6 +69,7 @@ ext-br0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
 The following commands test the ability of the firewall to route and filter
 traffic between networks. This actually tests many components of the firewall
 including but not limited to:
+
 - The [ARP responder component](../#arp-responder), which must be replying
   correctly for the firewall's IP address to be matched to its MAC address
 - The corresponding [filter](../#filters) component, which must be applying its
@@ -126,6 +127,11 @@ ip netns exec ext nc -u ${INT_HOST_IP} ${TEST_PORT}
 # UDP: int listens --> ext initiates
 ip netns exec ext nc -ul ${TEST_PORT}
 ip netns exec int nc -u ${EXT_HOST_IP} ${TEST_PORT}
+
+# UDP: int initiates listening for traffic and ext sends limited broadcast which should be dropped
+ip netns exec int nc -ul "${TEST_PORT}"
+echo "Hello" | ip netns exec ext socat - UDP-DATAGRAM:255.255.255.255:555,broadcast
+
 ```
 
 ### Testing the ICMP module
@@ -213,6 +219,7 @@ performs much of the testing described above.
 #### Running the script
 
 Prerequisites:
+
 - Firewall is running within the Docker container as specified [here](../docker)
 
 First, in the Docker container shell, change your working directory to the
