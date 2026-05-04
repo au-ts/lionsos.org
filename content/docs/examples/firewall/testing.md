@@ -94,19 +94,6 @@ ip netns exec ext ping ${INT_HOST_IP}
 ip netns exec int ping ${EXT_HOST_IP}
 ```
 
-#### ICMP to firewall interfaces
-
-Note that the firewall will only respond to pings on an interface if it has been explicitly enabled to do so. 
-If you wish to test for ping responsiveness, ensure it is enabled.
-
-```sh
-# ICMP: ext --> Firewall ext
-ip netns exec ext ping ${FW_EXT_IP}
-
-# ICMP: int --> Firewall int
-ip netns exec int ping ${FW_INT_IP}
-```
-
 #### TCP
 
 To test the forwarding of UDP and TCP traffic, we utilise the `netcat` program.
@@ -124,7 +111,8 @@ ip netns exec ext nc -l ${TEST_PORT}
 ip netns exec int nc ${EXT_HOST_IP} ${TEST_PORT}
 ```
 
-Once the connection is established, input entered into one terminal should be received by the other host, and be outputted on the other terminal.
+Once the connection is established, input entered into one terminal should be
+received by the other host, and be outputted on the other terminal.
 
 #### UDP
 
@@ -141,48 +129,61 @@ ip netns exec ext nc -ul ${TEST_PORT}
 ip netns exec int nc -u ${EXT_HOST_IP} ${TEST_PORT}
 ```
 
-
 ### Testing the ICMP module
 
-## ICMP reject rules
+#### Pinging firewall interfaces
 
-If a filter receives traffic matching with a reject rule, the filter requests that the
-ICMP module sends an ICMP unreachable response back to the sender. 
-Note that currently only the UDP and ICMP filter support such rules.
+Note that the firewall will only respond to pings on an interface if it has been
+explicitly enabled to do so. If you wish to test for ping responsiveness, ensure
+it is enabled.
 
-To test this, configure a matching `reject` rule, then send matching traffic
-through the firewall. See the forwarding sections for [ICMP](#icmp) and
-[UDP](#udp) for the required commands.
+```sh
+# ICMP: ext --> Firewall ext
+ip netns exec ext ping ${FW_EXT_IP}
 
+# ICMP: int --> Firewall int
+ip netns exec int ping ${FW_INT_IP}
+```
 
-Rejected ICMP ping traffic should result in `Destination Host Unreachable`
-responses from the firewall. Rejected UDP traffic should result in an ICMP
-`destination unreachable` response from the firewall (visible in packet
-captures and firewall logs).
+#### ICMP reject rules
 
-`reject` is not supported for TCP. Attempting to create a TCP rule with action
-`reject` in the webserver should return an error.
+If a filter receives traffic matching with a reject rule, the filter requests
+that the ICMP module sends an ICMP unreachable response back to the sender. Note
+that currently only the UDP and ICMP filter support reject rules as TCP
+implements this mechanism within the protocol.
 
+To test this, create filter rule with the action `reject`, then send traffic
+matching this rule through the firewall. See the forwarding sections for
+[ICMP](#icmp) and [UDP](#udp) for the required commands.
+
+Rejected ICMP ping traffic should result in `Destination [Host|Net] Unreachable`
+responses from the firewall (depending on whether the destination host lies
+within a reachable network). Rejected UDP traffic should result in an ICMP
+`destination unreachable` response from the firewall (visible in packet captures
+and firewall logs).
+
+The `reject` action is not supported by the TCP filters. Attempting to create a
+TCP rule with action `reject` in the webserver returns an `Unsupported action`
+error.
 
 #### ICMP destination unreachable
 
-Currently the ICMP module is [only
-capable](https://github.com/au-ts/lionsos/issues/194) of sending `destination
-unreachable` packets, which are sent to the source IP address of packets when
-the destination IP address of a packet can't be resolved. To test this, you can
-attempt to ping an IP address that doesn't exist:
+The ICMP module will send `destination unreachable` packets to the original
+sender of a packet if its destination IP address can't be reached. To test this,
+you can attempt to ping an IP address that doesn't exist:
 
 ```sh
 ip netns exec ext ping ${INT_BAD_HOST_IP}
 ip netns exec int ping ${EXT_BAD_HOST_IP}
 ```
 
-Initially this will cause the ARP requester to send out an ARP request for the
-bad IP. The requester will retry a total of 5 times (once per second), until it
-eventually decides the IP is unreachable. It will then notify the router about
-this, which will trigger the router to send a request to the ICMP module to send
-an ICMP 'destination unreachable' packet back to the original sender. This
-should result in your ping command outputting the following:
+Since these addresses lie within a subnet that *is* reachable, this will
+initially cause the ARP requester to send out an ARP request for the bad IP. The
+requester will retry a total of 5 times (once per second), until it eventually
+decides the IP is unreachable. It will then notify the router, which will
+trigger the router to send a request to the ICMP module to send an ICMP
+'destination unreachable' packet back to the original sender. This should result
+in your ping command outputting the following:
 
 ```sh
 root@db756615e5c4:~# ip netns exec ext ping ${INT_BAD_HOST_IP}
@@ -194,10 +195,13 @@ From 172.16.2.1 icmp_seq=4 Destination Host Unreachable
 From 172.16.2.1 icmp_seq=5 Destination Host Unreachable
 ```
 
+If the bad destination IP address instead belongs to an unreachable subnet, a
+`destination net unreachable` packet will be sent immediately.
+
 #### ICMP timeout
 
-ICMP timeout behaviour can be tested by sending a ping request with a very low TTL, 
-so the packet expires st the firewall hop.
+ICMP time to live timeout behaviour can be tested by sending a ping echo request
+with a very low TTL, so the packet expires at the firewall hop.
 
 Run:
 
