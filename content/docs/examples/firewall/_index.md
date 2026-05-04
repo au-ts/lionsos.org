@@ -103,10 +103,14 @@ transmit to.
 
 ### ICMP Queues
 
-ICMP queues are one-way queues used between the [routers](#routing-components)
-and the [ICMP module](#icmp-module) to request that an ICMP packet should be
-sent. Currently the ICMP module has limited functionality, however we hope to
-[expand on this in the future](https://github.com/au-ts/lionsos/issues/194).
+ICMP queues are one-way queues between the [ICMP module](#icmp-module) and the
+[filters](#filters) and [routers](#routing-components). They are used to request
+transmission of ICMP packets. Routers can request the transmission of
+`destination unreachable` and `timeout` packets, while filters can request the
+transmission of`reject` packets. The ICMP module is also responsible for
+generating ping responses for each of the firewall's interfaces, with
+per-interface ping responsiveness being configurable via the
+[webserver](#webserver).
 
 ### Other Shared Memory Structures
 
@@ -254,16 +258,16 @@ specific match is applied in the case of multiple matches):
 
 ```c
 typedef enum {
-    /* no rule exists */
-    FILTER_ACT_NONE,
     /* allow traffic */
-	FILTER_ACT_ALLOW,
+    FILTER_ACT_ALLOW = 1,
     /* drop traffic */
-	FILTER_ACT_DROP,
+    FILTER_ACT_DROP = 2,
+    /* reject traffic (drop traffic and send back icmp unreachable) */
+    FILTER_ACT_REJECT = 3,
     /* allow traffic, and additionally any return traffic */
-    FILTER_ACT_CONNECT,
+    FILTER_ACT_CONNECT = 4,
     /* traffic is return traffic from a connect rule */
-    FILTER_ACT_ESTABLISHED
+    FILTER_ACT_ESTABLISHED = 5,
 } fw_action_t;
 
 typedef struct fw_rule {
@@ -290,17 +294,20 @@ typedef struct fw_rule {
 } fw_rule_t;
 ```
 
-The `allow` and `drop` are self explanatory, while the `connect` and
-`established` actions are related. If a packet matches with a `connect` action,
-this implies the filter should allow the packet through the firewall, _as well
-as_ any return traffic. This is implemented using a pair of shared memory
-regions between matching protocol number filters denoted _instance_ regions.
-Upon matching with a `connect` rule, a filter creates a connection instance for
-the packet in its instance region. Before filters check their rule table, they
-first check their neighbour's instance table to determine if this is permitted
-return traffic allowed by their neighbour. If an instance is found, the
-`established` action is returned and the traffic is permitted. Upon the deletion
-of a `connect` rule, all instances corresponding to that rule are removed.
+The `allow` and `drop` actions are self explanatory, and the `reject` action is
+an extension of the `drop` action - matching traffic is dropped, *and* an ICMP
+`reject` packet is sent to the original sender via the ICMP module. The
+`connect` and `established` actions are related. If a packet matches with a
+`connect` action, this implies the filter should allow the packet through the
+firewall, _as well as_ any return traffic. This is implemented using a pair of
+shared memory regions between matching protocol number filters denoted
+_instance_ regions. Upon matching with a `connect` rule, a filter creates a
+connection instance for the packet in its instance region. Before filters check
+their rule table, they first check their neighbour's instance table to determine
+if this is permitted return traffic allowed by their neighbour. If an instance
+is found, the `established` action is returned and the traffic is permitted.
+Upon the deletion of a `connect` rule, all instances corresponding to that rule
+are removed.
 
 The following diagram shows the flow of packets through the filters, as well as
 the shared instances regions between matching filters.
@@ -346,14 +353,29 @@ src="/internal_router.svg" alt="Internal router" width="500" />
 
 ### ICMP module
 
-Currently the ICMP module's only functionality is to handle the sending of ICMP
-`destination unreachable` packets back to senders when a route to a host cannot
-be found, however we [hope to expand this in the
-future](https://github.com/au-ts/lionsos/issues/194). Unlike most components,
-there is only one ICMP module which is able to transmit out both NICs. The ICMP
-module also shares ICMP queues with all components that require the generation
-of ICMP packets. The diagram below demonstrates the current connections of the
-module.
+The ICMP module is responsible for generating ICMP traffic on behalf of all
+components in the firewall. There is only one ICMP module in the system which is
+able to transmit out all interfaces.
+
+The routing component will request an ICMP packet be transmitted upon finding
+that a packet's TTL has reached zero, or a packet's destination IP address
+cannot be reached. In this case, the ICMP module will send an ICMP `timeout` or
+`destination unreachable` packet back to the original sender.
+
+The ICMP module is also responsible for generating responses to pings received
+on each of the firewall's interfaces. If the router receives an incoming ICMP
+echo request destined for the firewall, it will forward the details to the ICMP
+module depending on whether it is configured to respond. Responsiveness to pings
+on a given interface is configurable at run-time via the
+[webserver](#webserver).
+
+Some filters (e.g. UDP and ICMP) support a `reject` filtering action. When
+traffic matches with a reject rule, the traffic is dropped *and* the filter
+requests that the ICMP module send a `destination unreachable` (port
+unreachable) packet back to the original sender, informing them that the port is
+unavailable.
+
+The diagram below demonstrates the connections of the ICMP module.
 
 <img style="display: block; margin-left: auto; margin-right: auto"
 src="/icmp_module.svg" alt="ICMP module" width="500" />
@@ -393,7 +415,8 @@ which allows them to efficiently be displayed without disrupting the flow of
 traffic through the system. A PPC is only required for modification.
 
 The following images show the GUI pages for viewing and updating routing table
-routes and the ICMP filter's rules:
+routes, the ICMP filter's rules, and the firewall's ping responsiveness
+settings:
 
 <img style="display: block; margin-left: auto; margin-right: auto"
 src="/firewall_webgui_router.png" alt="Webserver GUI routing table page" width="500" />
@@ -401,3 +424,6 @@ src="/firewall_webgui_router.png" alt="Webserver GUI routing table page" width="
 
 <img style="display: block; margin-left: auto; margin-right: auto"
 src="/firewall_webgui_icmprules.png" alt="Webserver GUI ICMP filter page" width="700" />
+
+<img style="display: block; margin-left: auto; margin-right: auto"
+src="/firewall_webgui_icmpping.png" alt="Webserver GUI ICMP ping page" width="700" />
