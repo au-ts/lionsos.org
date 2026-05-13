@@ -44,54 +44,58 @@ be found in the section on [running on hardware](./running).
 
 ## Architecture
 
-Below is a diagram of the architecture of the firewall system containing all the
-components. Components with arrows are connected via a Microkit Channel and
-shared memory, holding some type of sDDF or firewall
+Below is a diagram of the architecture of the firewall system with two network
+interfaces. Components attached with arrows are connected via a Microkit Channel
+and shared memory holding either an sDDF or firewall
 [queue](#firewall-shared-memory-regions) data structure.
-
-Currently, the firewall example only supports two network interfaces (NICs), one
-denoted by _external_ (untrusted, referred to as 0), the other _internal_
-(trusted, referred to as 1). [We hope to support a variable number in the
-future](https://github.com/au-ts/lionsos/issues/196). The
-[webserver](#webserver) component, which is used to view and modify filtering
-rules and routes, is currently only reachable from the internal network.
 
 <div style="background-color: clear; display: inline-block; padding: 0.5rem">
     <img src="/firewall.svg" alt="Firewall architecture diagram" />
 </div>
 
+The firewall supports an arbitrary number of interfaces (NICs) which can be
+configured in the [metaprogram](./building#firewall-metaprogram). The exact
+architecture is extremely configurable. The firewall's rules and policies can be
+configured further at runtime via the [webserver](#webserver) component.
+
 ## Firewall Shared Memory Regions
 
-The firewall implements zero-copy forwarding of packets from reception to
-transmission. This requires that the receive DMA region of one NIC be a transmit
-DMA region of the other. Additionally, each component that generates packets has
-its own transmit DMA region allocated through the sDDF net sub-system.
+The firewall implements zero-copy forwarding of packets. This requires that the
+data region used to receive by one interface be used for transmission by the
+other interfaces. Additionally, each component that generates packets has its
+own transmission data region allocated through the sDDF net sub-system.
 
-Aside from network DMA regions, the majority of other shared memory regions hold
-single-producer, single-consumer queues. The queue data structures that can be
-found in the firewall are:
+Aside from network data regions, the majority of other shared memory regions
+hold single-producer, single-consumer queues. The queue data structures that can
+be found in the firewall are:
 
 ### sDDF Net Queues
 
-An sDDF net queue is really a _pair_ of queues used to transfer receive or
-transmit data buffers between components. sDDF net queues are used when buffers
-are to be returned to the same component they are received from. In a typical
-sDDF net system this is always the case, however the firewall often requires
-components to return buffers to different components. sDDF net queues also use a
-signalling protocol to decide when to signal their neighbouring component. More
-on sDDF net queues can be found
-[here](https://trustworthy.systems/projects/drivers/sddf-design-latest.pdf).
+An sDDF net queue is really a _pair_ of queues used to transfer data buffers
+between components for transmission or reception. sDDF net queues are used in
+the firewall when buffers are to be returned to the same component they are
+received from. In a typical sDDF net system this is always the case, however the
+firewall often requires components to return buffers to different components.
+sDDF net queues also use a signalling protocol to decide when to signal their
+neighbouring component. More on sDDF net queues can be found in the sDDF
+networking
+[docs](https://github.com/au-ts/sddf/blob/main/docs/network/network.md) and the
+sDDF [design
+doc](https://trustworthy.systems/projects/drivers/sddf-design-latest.pdf).
 
 ### Firewall Queues
 
 A firewall queue is also used to transfer receive or transmit data buffers,
-however it is only one-way. This allows components like the [firewall transmit
-virtualiser](#firewall-network-components) to receive buffers from the router,
-and return them back to the [firewall receive
-virtualiser](#firewall-network-components) upon transmission. Firewall queues,
-along with all the following queues, do not use a signalling protocol to
-determine when to signal, and instead components signal their neighbour every
-time a batch of buffers has been enqueued.
+however only in one direction. This allows components like the transmit
+virtualiser to receive buffers from the router, and return them back to the
+original receive virtualiser after transmission is complete.
+
+<img style="display: block; margin-left: auto; margin-right: auto"
+src="/firewall_queues.svg" alt="Firewall queues" width="600" />
+
+Firewall queues, along with all the following queues, do not use a signalling
+protocol to determine when to signal, and instead producers signal consumers
+after enqueuing a batch of data.
 
 ### ARP Queues
 
@@ -140,11 +144,11 @@ virtualiser which uses destination MAC address. Packets are forwarded to the
 corresponding [ARP](#arp-components) or [filter](#filters) component depending
 on the match. The following diagram illustrates how the Rx virtualiser is
 connected to its neighbours which it forwards packets to (not pictured is how
-buffers are returned to the Rx virtualiser).
+buffers are returned to the Rx virtualiser):
 
 <img style="display: block; margin-left: auto; margin-right: auto"
-src="/firewall_net_components.svg" alt="Firewall network virtualiser"
-width="400" />
+src="/firewall_rx_virt.svg" alt="Firewall network virtualiser"
+width="600" />
 
 As with sDDF network Rx virtualisers, static client queue and protocol
 configuration data is generated in the [metaprogram](./building) and copied into
@@ -221,7 +225,7 @@ entries are removed. Time intervals and retry limits can be configured in the
 The following diagram shows how the ARP requester is connected to its clients:
 
 <img style="display: block; margin-left: auto; margin-right: auto"
-src="/arp_requester.svg" alt="ARP requester connections" width="400" />
+src="/firewall_arp_requester.svg" alt="ARP requester connections" width="400" />
 
 #### ARP Responder
 
@@ -233,28 +237,31 @@ responses will only be generated if there is a match with the firewall's local
 IP.
 
 <img style="display: block; margin-left: auto; margin-right: auto"
-src="/arp_responder.svg" alt="ARP responder component" width="500" />
+src="/firewall_arp_responder.svg" alt="ARP responder component" width="500" />
 
 ### Filters
 
-Filter components are responsible for determining whether traffic or a certain
-IP protocol number should be permitted through the network. They are the first
-component to receive non-ARP traffic after the network Rx virtualiser. If it is
-decided that a packet is permitted through the firewall, a filter will transfer
-the packet to the routing component via a firewall queue. If the packet is not
-permitted, it will be returned back to the Rx virtualiser. For each supported
-protocol number, there is one filter per interface. Currently, the firewall
-contains only ICMP, UDP and TCP filters that share a very similar
-implementation. We hope to [extend our protocol specific filtering for TCP
-traffic in the future](https://github.com/au-ts/lionsos/issues/186).
+Filter components filter traffic - each filter is responsible for determining
+whether traffic of a particular transport layer protocol should be permitted
+through the firewall. They are the first component to receive IP traffic after
+the network Rx virtualiser.
+
+If a filter permits a packet through the firewall, it will transfer the packet
+to the routing component via a firewall queue. If the packet is not permitted,
+it will be returned back to the Rx virtualiser. For each supported IP protocol,
+there is one filter per interface. Currently, the firewall contains only ICMP,
+UDP and TCP filters that share a very similar implementation. We hope to [extend
+our protocol specific filtering for TCP
+traffic](https://github.com/au-ts/lionsos/issues/186) to support tracking of TCP
+connections.
 
 To determine whether traffic should be permitted or dropped, filter components
-check their filter rules tables. If there is no match, the _default_ rule is
-applied. Both the filter rule table and default rule of a filter may be updated
-using the [webserver GUI](#webserver). Our current classes of filtering rules
-are denoted by `fw_action_t` and are applied to packets whose source and
-destination IP addresses and port numbers match against a `fw_rule_t` (the most
-specific match is applied in the case of multiple matches):
+compare each packet to their rule tables. Rule table entries are given by the
+type `fw_rule_t`. A rule is applied to a packet if the packet's source and
+destination IP and port number matches against a rule (clashes are resolved by
+the most specific match). If there is no match, the _default_ rule is applied.
+The list of actions a filter can take upon matching with a rule is given by the
+`fw_action_t` type.
 
 ```c
 typedef enum {
@@ -271,8 +278,6 @@ typedef enum {
 } fw_action_t;
 
 typedef struct fw_rule {
-    /* whether this is a valid rule */
-    bool valid;
     /* action to be applied to traffic matching rule */
     uint8_t action;
     /* source IP */
@@ -291,65 +296,74 @@ typedef struct fw_rule {
     bool src_port_any;
     /* rule applies to any destination port */
     bool dst_port_any;
+    /* rule id assigned */
+    uint16_t rule_id;
 } fw_rule_t;
 ```
 
 The `allow` and `drop` actions are self explanatory, and the `reject` action is
 an extension of the `drop` action - matching traffic is dropped, *and* an ICMP
-`reject` packet is sent to the original sender via the ICMP module. The
-`connect` and `established` actions are related. If a packet matches with a
-`connect` action, this implies the filter should allow the packet through the
-firewall, _as well as_ any return traffic. This is implemented using a pair of
-shared memory regions between matching protocol number filters denoted
-_instance_ regions. Upon matching with a `connect` rule, a filter creates a
-connection instance for the packet in its instance region. Before filters check
-their rule table, they first check their neighbour's instance table to determine
-if this is permitted return traffic allowed by their neighbour. If an instance
-is found, the `established` action is returned and the traffic is permitted.
-Upon the deletion of a `connect` rule, all instances corresponding to that rule
-are removed.
+`reject` packet is sent to the original sender via the ICMP module.
 
-The following diagram shows the flow of packets through the filters, as well as
-the shared instances regions between matching filters.
+The `connect` and `established` actions are related. If a packet matches with a
+`connect` rule, this implies the filter should allow the packet through the
+firewall, _as well as_ any return traffic. This is implemented using a pair of
+shared memory regions between filters denoted _instance_ regions.
+
+Upon matching with a `connect` rule, a filter creates a connection instance for
+the packet in its instance region. Before filters check their rule tables, they
+*first* check their neighbour's instance table to determine if the packet is
+permitted as return traffic due to an instance created by another filter. If an
+instance is found, the `established` action is applied and the traffic is
+permitted. Upon the deletion of a `connect` rule, all instances corresponding to
+that rule are removed.
+
+Both the filter rule table and default rule of a filter may be updated using the
+[webserver GUI](#webserver). The following diagram shows the flow of packets
+through the filters, as well as the shared instances regions between matching
+filters:
 
 <img style="display: block; margin-left: auto; margin-right: auto"
-src="/filter.svg" alt="Filter connections" width="700" />
+src="/firewall_filter.svg" alt="Filter connections" width="700" />
 
 
-### Routing Components
+### Routing Component
 
-Currently there are two routing components, one for each NIC (although we hope
-to [change this to one](https://github.com/au-ts/lionsos/issues/191) in the
-future). Routers receive packets which have been allowed through the firewall by
-the filter components. They are responsible for finding the MAC address of the
-next-hop of the the packet and updating the Ethernet header.
+The routing component or router receives packets which have been allowed through
+the firewall by the filter components. It is responsible for figuring out the
+next-hop of each packet, the MAC address of the next-hop, updating the Ethernet
+Header and transmitting the packet out the correct interface.
 
 The first step of this procedure is to look up the destination IP in the
-_routing table_, which is partially configured at build time with the
-[metaprogram](./building) and can be re-configured at run-time using the
-[webserver](#webserver) component. If multiple matches are found, the more
-precise match will be selected. If no route is found the packet will be dropped.
+_routing table_ to deduce whether the destination IP (or its next-hop) belongs
+to a reachable subnet, and what interface should be used to reach it. The
+routing table is partially configured at build time with the
+[metaprogram](./building#firewall-metaprogram) and can be re-configured at
+run-time using the [webserver](#webserver) component. If multiple matches in the
+routing table are found, the more precise match will be selected. If no route is
+found the packet will be dropped.
 
-If a next-hop IP address is found, the ARP table is searched to find the
-corresponding MAC address. If a valid entry is not found, an ARP request is
-generated and enqueued with the ARP requester, and the outgoing packet is
-enqueued in a `pkts_waiting_t` linked list grouped by destination IP. If a
-valid, reachable entry is found or returned from the ARP requester, the packet
-will be updated and transmitted. If the next-hop is found to be unreachable, the
-packet will be dropped. When a packet is dropped, the router sends the details
-of the packet to the [ICMP module](#icmp-module) so a `destination unreachable`
-packet can be transmitted back to the source IP.
+If a match is found, the ARP table of the interface is searched to find the MAC
+address of the next-hop. If a valid entry is not found, an ARP request is
+generated and enqueued with the ARP requester, and the outgoing packet is placed
+in a packets waiting (`pkts_waiting_t`) list of pending packets for the
+interface.
 
-The following diagrams demonstrate the flow of packets through the routers. The
-first diagram shows the external router, and the second shows the internal. The
-only difference being that the internal router has a route to transmit to the
-[webserver](#webserver) component.
+If the ARP requester responds with a valid MAC address for the next-hop, or if
+there was a pre-existing reachable entry the packet will be updated and
+transmitted. If the next-hop is found to be unreachable, the packet will be
+dropped. When a packet is dropped, the router sends the details of the packet to
+the [ICMP module](#icmp-module) so a `destination unreachable` packet can be
+transmitted back to the source IP.
+
+The router also routes webserver traffic to the webserver component, and ICMP
+ping traffic to the ICMP module depending on whether ping responsiveness is
+enabled.
+
+The following diagram demonstrates the flow of packets through the router:
 
 <img style="display: block; margin-left: auto; margin-right: auto"
-src="/external_router.svg" alt="External router" width="400" />
-
-<img style="display: block; margin-left: auto; margin-right: auto"
-src="/internal_router.svg" alt="Internal router" width="500" />
+src="/firewall_router.svg" alt="Router" width="400" />
 
 ### ICMP module
 
@@ -378,7 +392,7 @@ unavailable.
 The diagram below demonstrates the connections of the ICMP module.
 
 <img style="display: block; margin-left: auto; margin-right: auto"
-src="/icmp_module.svg" alt="ICMP module" width="500" />
+src="/firewall_icmp_module.svg" alt="ICMP module" width="500" />
 
 ### Webserver
 
