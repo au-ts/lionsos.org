@@ -30,7 +30,7 @@ Run the following commands depending on your machine:
 ```sh
 sudo apt update && sudo apt install make cmake clang lld llvm device-tree-compiler unzip git qemu-system-arm python3 python3-pip
 # If you see 'error: externally-managed-environment', add --break-system-packages
-pip3 install sdfgen==0.26.0
+pip3 install sdfgen=={{< sdfgen_version >}}
 ```
 {{% /tab %}}
 {{% tab "macOS" %}}
@@ -41,14 +41,14 @@ pip3 install sdfgen==0.26.0
 # Homebrew will print out the correct path to add
 brew install make dtc llvm qemu
 # If you see 'error: externally-managed-environment', add --break-system-packages
-pip3 install sdfgen==0.26.0
+pip3 install sdfgen=={{< sdfgen_version >}}
 ```
 {{% /tab %}}
 {{% tab "Arch" %}}
 ```sh
 sudo pacman -Sy make clang lld dtc python3 python-pip
 # If you see 'error: externally-managed-environment', add --break-system-packages
-pip3 install sdfgen==0.26.0
+pip3 install sdfgen=={{< sdfgen_version >}}
 ```
 {{% /tab %}}
 {{% tab "Nix" %}}
@@ -136,170 +136,303 @@ routers and ARP components.
 
 ## Firewall metaprogram
 
-The firewall metaprogram (`examples/firewall/meta.py`) is responsible for
-creating all the required Microkit objects and sDDF connections. It also creates
-`.data` files containing serialised encodings of this data for all the
-protection domains in the system. We then `objcopy` these `.data` files into
-each `.elf` file, either in the metaprogram itself or in the makefile
-`firewall.mk`.
+The firewall is a highly modular and configurable LionsOS system. It supports
+configuration of the following:
+* Platform (QEMU virt AArch64 or Compulab IOT-GATE-IMX8PLUS)
+* Number of network interfaces (minimum 2), and their IP addresses and subnets
+* Number and type of IP protocol filter components (UDP, TCP and ICMP provided)
+* Initial filtering rules and routing table routes (these can also be modified
+  at run-time)
+* The capacity of each data structure used by firewall components
 
-Due to the high degree of complexity of the firewall, and the vast number of
-connections between components, the firewall system defines a large number of
-_firewall configuration structs_: `include/lions/firewall/config.h`. Typically,
-for most LionsOS systems, this complexity is hidden within the `sdfgen` module.
-However, since the firewall is a new system, and the system information is still
-under development, we handle the creation and serialisation of these `.data` files
-in the metaprogram.
+To enable this configurability without requiring the modification of C source
+files, the firewall's [metaprogram](../releases/0.3.0/#metaprogram-tooling)
+(`examples/firewall/meta.py`) utilises the Python `sdfgen` tooling, along with a
+number of custom firewall Python modules. These modules can be found in the
+`pyfw` directory (`examples/firewall/pyfw/`) and will be explained below.
+
+### System configuration data
+
+Build-time system configuration data is passed to LionsOS components via
+*configuration structs*. Due to the high degree of complexity of the firewall
+and the speed at which connections between components are changing, the firewall
+defines a large number of _firewall configuration structs_
+(`include/lions/firewall/config.h`) which are not yet incorporated into the
+`sdfgen` module, as is typically the case for sDDF configuration data.
+
+Each firewall component which depends on one or more of these structs defines a
+section in their C file,  see the ICMP filter component
+(`examples/firewall/filters/icmp_filter.c`):
+
+```c
+__attribute__((__section__(".fw_filter_config"))) fw_filter_config_t filter_config;
+
+// This section holds an uninitialised copy of the filter config struct below
+typedef struct fw_filter_config {
+    uint8_t interface;
+    fw_connection_resource_t router;
+    region_resource_t internal_instances;
+    region_resource_t external_instances[FW_MAX_INTERFACES];
+    uint8_t num_external_instances;
+    uint16_t instances_capacity;
+    fw_webserver_filter_config_t webserver;
+    region_resource_t rule_id_bitmap;
+    fw_connection_resource_t icmp_module;
+    fw_rule_t initial_rules[FW_MAX_INITIAL_FILTER_RULES];
+    uint8_t num_initial_rules;
+} fw_filter_config_t;
+```
+
+The metaprogram then calculates what data should be in each field, creates a
+data file containing an _initialised_ struct, then copies this initialised
+struct into the component's `.elf` file.
+
+In the case of sDDF configuration structs (for example,
+`dep/sddf/include/sddf/network/config.h`), the `sdfgen` module encapsulates the
+calculation and serialisation of the struct, and emits a data file through an
+API. However for the firewall, the metaprogram performs these operations without
+using the `sdfgen` module. This is why the firewall's metaprogram, and
+corresponding modules, are so much lengthier than the metaprogram of other
+LionsOS systems.
+
+To enable the accurate serialisation of these configuration structs, i.e. ensure
+that the size and type of each struct field initialised by the metaprogram
+correctly reflects what is given in the C configuration file, we have created a
+Python script `sdfgen_helper.py`.
 
 The `sdfgen_helper.py` script runs prior to the `metaprogram.py`, and generates
 a python module named `config_structs.py` which defines a Python class for each
-configuration struct defined in the C config file. Any updates to the
-configuration struct file will be reflected in the generated python module
-during the next build, and will likely require updates to the API used in the
-metaprogram.
+configuration struct defined in the C config file. Any updates to the C
+`config.h` struct file will be reflected in the generated python module during
+the next build, and will likely require updates to the metaprogram and the
+`pyfw` modules which use the `config_structs` APIs.
 
-### Firewall system constants
+### Metaprogram system configuration
 
-The metaprogram is also where many system wide constants can be found, including
-data structure capacities, local subnet information, IP addresses and MAC
-addresses of the NICs. Any changes to these values will require the firewall
-image to be rebuilt. These will need to be updated to match your
-[Docker](../docker) or [hardware](../running) testing setup.
+Most of the configurable system properties listed in the [metaprogram
+introductory section](#firewall-metaprogram) are set in the Python constants
+file (`examples/firewall/pyfw/constants.py`). This includes board information,
+networking constants, as well as data structure capacities. Essentially all
+properties of the firewall that are designed to be configurable per running
+instance can be set here.
+
+If you wish to update the connections between components, or add a new
+component, check the [metaprogram component files](#metaprogram-component-files)
+section.
 
 #### Network constants
 
-The network configuration information can be found at the top of the
-metaprogram:
+The network settings of each network interface (or NIC) are represented by the
+NetworkInterface class, the definition can be found in
+`examples/firewall/pyfw/component_net_interface.py`:
 
 ```py
-# System network constants
-ext_net = 0
-int_net = 1
+@dataclass
+class NetworkInterface:
+    index: int
+    name: str
+    board_ethernet: str
+    mac: Tuple[int, ...]
+    ip: str
+    subnet_bits: int
+    priorities: InterfacePriorities = field(default_factory=InterfacePriorities)
 
-macs = [
-    [0x00, 0x01, 0xC0, 0x39, 0xD5, 0x18],  # External network
-    [0x00, 0x01, 0xC0, 0x39, 0xD5, 0x10],  # Internal network
-]
+    @property
+    def ip_int(self) -> int:
+        import ipaddress
 
-subnet_bits = [12, 24]  # External network, Internal network
+        ip_split = self.ip.split(".")
+        ip_split.reverse()
+        reversed_ip = ".".join(ip_split)
+        return int(ipaddress.IPv4Address(reversed_ip))
 
-ips = ["172.16.2.1", "192.168.1.1"]  # External network, Internal network
+    @property
+    def mac_list(self) -> List[int]:
+        return list(self.mac)
 ```
+
+Each network interface must be given an `index` integer (starting from 0). This
+number is used to select which ethernet device the software interface
+corresponds to (the network interface with index 0 uses `ethernet0`).
+Additionally, the index is used as an identifier for all network components
+receiving packets from this interface, as well as for the interface's Rx DMA
+buffers so they can be returned after forwarding.
+
+In `constants.py`, the `interfaces` array lists each network interface of the
+firewall - by default there are two interfaces listed. For each network
+interface, all interface specific network components (virtualisers, filters, ARP
+components) will be duplicated with the value of the interfaces's `index`
+appended to their elf and Microkit names.
+
+### Metaprogram component files
+
+Each component in the firewall is represented by a python class which encodes
+the component's connections with other components, as well as build time
+configuration information. Each class defines two mandatory methods:
+- `__init__`: The special Python method for creating an instance of the class.
+  As arguments, this function takes fixed instance specific constants like
+  interface index and process priority. Within this function any required class
+  book-keeping is maintained, and any memory regions that the instance needs to
+  function correctly are generated.
+- `finalise_config`: This method ensures that all the configuration data has
+  been initialised correctly, so typically involves a number of asserts. The
+  method is called prior to the configuration data file being created.
+
+Each component is a child class of the corresponding Python configuration class
+in the [sdfgen helper](#system-configuration-data) generated module
+`config_structs.py`. For example, the ARP requester component class defined in
+`examples/firewall/pyfw/component_arp.py`:
+
+```py
+class ArpRequester(Component, FwArpRequesterConfig):
+```
+
+has as a child class the `FWArpRequesterConfig` which encodes the
+`fw_arp_requester_config_t` struct defined in `config.h`. This allows each
+component to fill in and add to the fields of the struct as connections are
+established and memory regions are generated.
+
+In addition to the required methods, each class may implement various methods
+for connecting instances to other components. For example, the ARP requester
+class has a method for adding a client (i.e. a component that can make ARP
+requests):
+
+```py
+    def add_arp_client(
+        self,
+        client: Component,
+    ) -> FwArpConnection:
+```
+
+The method:
+1. Generates the ARP queue memory regions (one for requests, another for
+   responses).
+2. Maps the regions into the ARP requester and client.
+3. Creates a channel for the components to signal each other on.
+4. Appends the client information (queue addresses, capacity and channel number)
+   to the ARP requester's internal list of clients.
+5. Returns the information needed by the client (queue addresses, capacity and
+   channel number).
+
+Each component class implements different methods for connecting with other
+components. Connections between components are *always* created using class
+methods, with only one exception (the instance regions of filters of the same
+protocol are mapped into each others address space in the `finalise_config`
+method).
+
+Instances of component classes, and connections between them, are all created in
+the [metaprogram](#metaprogram-file) itself.
 
 #### Data structure sizes and capacities
 
-Data structure sizes and capacities are encoded using the
-`FirewallMemoryRegions` and `FirewallDataStructure` classes. Currently all
-instances of these classes are declared at the top of the metaprogram, with the
-first as follows:
+Due to the static nature of systems built using the Microkit framework, all
+memory regions are defined and sized at build time. However this requires
+calculating in one way or another the number of bytes required for a given data
+structure. For example, in the router we have:
+
+```C
+typedef struct fw_routing_entry {
+    /* ip address of destination subnet */
+    uint32_t ip;
+    /* number of bits in subnet mask */
+    uint8_t subnet;
+    /* interface subnet traffic should be transmitted through */
+    uint8_t interface;
+    /* ip address of next hop */
+    uint32_t next_hop;
+} fw_routing_entry_t;
+
+typedef struct fw_routing_table {
+    /* capacity of table */
+    uint16_t capacity;
+    /* number of valid entries in table */
+    uint16_t size;
+    /* routing table entries stored consecutively */
+    fw_routing_entry_t entries[];
+} fw_routing_table_t;
+
+```
+
+As you can see, we do not enforce in the C code the capacity of the routing
+table (or size of the `entries` array). Instead, the router is given the
+capacity of the table as an entry in it's configuration struct
+`fw_router_config_t`. However, this does not solve the issue of ensuring that we
+have generated a memory region large enough to contain the entire routing table.
+
+For this, we use the memory layout module
+(`examples/firewall/pyfw/memory_layout.py`) which provides the
+`FirewallMemoryRegions` and `FirewallDataStructures` classes. The
+FirewallMemoryRegion class represents a memory region which can contain zero or
+more FirewallDataStructure instances, representing data structures defined in
+the firewall codebase.
+
+In the example above, the `fw_routing_table_t` and the `fw_routing_entry_t` are
+the data structures that are held within the routing table memory region:
 
 ```py
-# Firewall memory region and data structure object declarations, update region capacities here
-fw_queue_wrapper = FirewallDataStructure(elf_name="routing.elf", c_name="fw_queue")
-
-dma_buffer_queue = FirewallDataStructure(
-    elf_name="routing.elf", c_name="net_buff_desc", capacity=512
+routing_table_wrapper = FirewallDataStructure(
+    elf_name="routing.elf", c_name="fw_routing_table"
 )
-dma_buffer_queue_region = FirewallMemoryRegions(
-    data_structures=[fw_queue_wrapper, dma_buffer_queue]
+routing_table_buffer = FirewallDataStructure(
+    elf_name="routing.elf", c_name="fw_routing_entry", capacity=256
+)
+routing_table_region = FirewallMemoryRegions(
+    data_structures=[routing_table_wrapper, routing_table_buffer]
 )
 ```
 
-These classes aim to simplify the process of creating the Microkit memory
-regions needed to hold firewall data structures. Typically each memory region
-contains one or more arrays of structs, and a collection of corresponding
-metadata variables (like head and tail pointers) also held in structs. This
-poses a challenge during development as the elements within these structs tend
-to change frequently, and each time they change the size of the memory region
-used to hold them needs to be recalculated.
+See (`examples/firewall/pyfw/constants.py`) for further examples of data
+structures and regions.
 
-To address this issue, we extract the size of these structs automatically by
-parsing the dwarf information of an elf file containing their definitions. This
-leaves the more complicated aspects of type sizing like struct alignment to the
-build system. Firewall defined types are encoded in the `FirewallDataStructure`
-class, which can then be used as building blocks for constructing a
-`FirewallMemoryRegions` object.
-
-`FirewallMemoryRegions` objects can be constructed in this 'building-block'
-fashion by proving a list of `FirewallDataStructure` objects, or this can be
-bypassed and a known fixed size can be provided. One the required size of the
-region is known, it is used as the minimum region size and the final region size
-is calculated by rounding up to the nearest page size.
+To extract the size of each FirewallDataStructure and thus calculate the size of
+each FirewallMemoryRegion instance, we parse each elf file's dwarf information
+directly and read the size and alignment of each data structure type.
 
 The `FirewallMemoryRegions` and `FirewallDataStructure` class instance variables
 work as follows:
 
 ```py
-class FirewallMemoryRegions:
-    def __init__(
-        self,
-        *,
-        min_size: int = 0,
-        data_structures: List[FirewallDataStructure] = [],
-        size_formula=lambda list: sum(item.size for item in list),
-    ):
+FirewallMemoryRegions(unaligned_size = None,
+                      dependent_type_info: List[FirewallDataStructure]|None = None,
+                      region_size_formula = lambda list: sum(item.get_size() for item in list))
 ```
-- `min_size`: If provided, this size will bypass the `FirewallDataStructure`
-  mechanism, and this value will be used for the minimum size of the region.
-- `data_structures`: If `min_size` is not provided, this list, along with the
-  size formula, will be used to calculate the minimum size. In particular, the
-  size of each element in this list will be combined using the `size_formula`.
-- `size_formula`: If `min_size` is not provided, this formula will be used to
-  calculate the minimum size using the list of internal data structure. The
-  formula should take this list as its only argument, and produce a minimum
-  size. If a list is provided but a formula is not, a default formula of taking
-  the sum of the size of each data structure will be use.
+- `unaligned_size`: The (non page aligned) size of the region if known. If this
+  is provided the size calculation phase will be bypassed.
+- `dependent_type_info`: The data structures contained within this memory
+  region.
+- `region_size_formula`: The formula used to calculate the overall size of the
+  region from the dependent data structures. By default computes region size =
+  sum(dependent_type_info.size).
 
 ```py
-class FirewallDataStructure:
-    def __init__(
-        self,
-        *,
-        size: int = 0,
-        entry_size: int = 0,
-        capacity: int = 1,
-        size_formula=lambda x: x.entry_size * x.capacity,
-        elf_name=None,
-        c_name=None,
-    ):
+FirewallDataStructure(size: int|None = None,
+                      entry_size:int|None = None,
+                      capacity:int|None = None,
+                      size_formula_bytes = lambda x: x.entry_size * x.capacity,
+                      elf_name = None,
+                      c_name = None)
 ```
-- `size`: The total size of the region if known. If this is provided, both the
-  elf extraction phase and size calculation phase will be bypassed.
-- `entry_size`: The size of an array entry. This can either set on instantiation
-  or extracted from the `elf_name` elf file by searching for the type given by
-  `c_name`.
-- `capacity`: The capacity of the data structure, used in the case that the
-  instance represents an array. This defaults to 1 in the case that the instance
-  is just a single struct.
-- `size_formula`: The formula used to calculate the overall size of the
-  structure from the entry size and capacity. The formula takes an object of the
-  class as a single argument and outputs a size. The default formula assumes
-  that the size is given by the product of entry size and capacity.
-- `elf_name`: The name of the elf file to find the dwarf type information.
-- `c_name`: The name of the c struct type of the data structure. For example,
-  when extracting the `fw_arp_entry` type, the c_name to use is `fw_arp_entry`,
-  as shown in the code snippets below.
+- `size`: The total size of the data structure if known. If this is provided,
+  both the elf extraction phase and size calculation phase will be bypassed.
+- `entry_size`: The size of an array entry. Either set on instantiation or
+  extracted by the metaprogram.
+- `capacity`: The capacity of the array to be held in this region.
+- `size_formula_bytes`: The formula for calculating the size of the data
+  structure held in this region, by default computes size = entry size *
+  capacity.
+- `elf_name`: The name of the elf file to find the dwarf information.
+- `c_name`: The name of the variable in `{elf_name}` that contains the size of
+  the array entry.
 
-```py
-arp_cache_buffer = FirewallDataStructure(
-    elf_name="arp_requester.elf", c_name="fw_arp_entry", capacity=512
-)
-```
+### Metaprogram file
 
-```c
-typedef struct fw_arp_entry {
-    /* state of this entry */
-    uint8_t state;
-    /* IP address */
-    uint32_t ip;
-    /* MAC of IP if IP is reachable */
-    uint8_t mac_addr[ETH_HWADDR_LEN];
-    /* bitmap of clients that initiated the request */
-    uint8_t client;
-    /* number of arp requests sent for this IP address */
-    uint8_t num_retries;
-} fw_arp_entry_t;
-```
+The firewall metaprogram (`examples/firewall/meta.py`) is the file which *uses*
+all the modules listed above. By reading the configuration information given in
+`constants.py`, it creates all the required components and connections between
+them. This essentially boils down to creating the underlying Microkit objects
+through the `sdfgen` module, emitting a configuration file (`*.data`) for each
+component, and initialising the sections in each `.elf` file. Additionally, the
+metaprogram ensures the a Microkit system file is emitted.
 
 ## Next steps
 
