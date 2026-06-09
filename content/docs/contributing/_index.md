@@ -16,6 +16,9 @@ Key repositories are
  * libvmm (virtual machine monitor library) --- https://github.com/au-ts/libvmm
  * Documentation site (this website) --- https://github.com/au-ts/lionsos_docs
 
+See the [repository ownership](#repository-ownership) section for details on
+contacting the technical authority on each repository.
+
 Currently, the main LionsOS repository has all the projects it depends on
 (such as sDDF and libvmm) as Git submodules.
 
@@ -104,3 +107,22 @@ We try to respond to queries on the devel@sel4.systems mailing list
 via the [seL4
 Mattermost](https://mattermost.trustworthy.systems/seL4-external) chat
 server.
+
+### Repository Ownership
+
+Each Trustworthy Systems repository uses an **ownership system** for managing
+code review. Repositories are split into component sections (sDDF device
+classes, LionsOS examples etc.) and an owner is assigned to each. Additionally,
+default owners of the entire repository are also assigned.
+
+If you are working on a LionsOS example or feature, the owner of the most
+closely related existing component will be your first port of call for code
+review or technical advice. For new components or changes to miscellaneous parts
+of LionsOS that do not have an obvious owner, select one of the default
+reviewers. Your code will also be reviewed by this person - please assign them
+as the reviewer when creating your PR.
+
+The lists of owners of our repositories can be found here:
+- [sDDF](https://github.com/au-ts/sddf/blob/main/MAINTAINERS.md)
+- [LionsOS](https://github.com/au-ts/lionsos/blob/34be6ade619594af0455b6fe86e7d51cdc63a533/MAINTAINERS.md)
+- [libVMM](https://github.com/au-ts/libvmm/blob/becdd13da8ddac8fb6c26b6967eccf95b1ce29e0/MAINTAINERS.md)
