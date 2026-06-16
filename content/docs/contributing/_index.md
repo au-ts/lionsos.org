@@ -125,4 +125,4 @@ as the reviewer when creating your PR.
 The lists of owners of our repositories can be found here:
 - [sDDF](https://github.com/au-ts/sddf/blob/main/MAINTAINERS.md)
 - [LionsOS](https://github.com/au-ts/lionsos/blob/main/MAINTAINERS.md)
-- [libVMM](https://github.com/au-ts/libvmm/blob/becdd13da8ddac8fb6c26b6967eccf95b1ce29e0/MAINTAINERS.md)
+- [libVMM](https://github.com/au-ts/libvmm/blob/main/MAINTAINERS.md)
