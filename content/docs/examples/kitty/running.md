@@ -23,6 +23,15 @@ time.  Its MicroPython interpreter can import python modules from the
 NFS filesystem.  The NFSv3 server has to be set up to export to
 whatever IP address the NFS component is given by DHCP.
 
+## Running on QEMU
+
+If you wish to run the Kitty image on QEMU, use the following command in the
+same place you compiled the system:
+
+```sh
+make qemu
+```
+
 ## Boot
 
 When first booting up the system you will see the MicroPython REPL
