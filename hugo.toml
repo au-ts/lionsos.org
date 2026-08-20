@@ -1,6 +1,6 @@
 baseURL = 'https://lionsos.org/'
 languageCode = 'en-au'
-title = 'LionsOS 0.3.0'
+title = 'LionsOS 0.4.0'
 theme = 'hugo-book'
 
 [markup.goldmark.renderer]
@@ -12,9 +12,9 @@ unsafe = true
   BookTheme = 'dark'
   BookSection = 'docs'
   BookRepo = 'https://github.com/au-ts/lionsos_docs'
-  LionsOsVersion = '0.3.0'
-  MicrokitVersion = '2.0.1'
-  SdfgenVersion = '0.28.0'
+  LionsOsVersion = '0.4.0'
+  MicrokitVersion = '2.3.0'
+  SdfgenVersion = '0.35.0'
 
 [menu]
 [[menu.after]]
