@@ -13,7 +13,9 @@ protocol, and permits or denies the traffic based on a set of build and run-time
 configurable rules. The firewall also acts as a router and can forward traffic
 to its next-hop based on a build and run-time configurable routing table. There
 are further networking functionalities the firewall is capable of detailed
-below. The firewall example is currently fairly rudimentary, and we [invite the
+below.
+
+The firewall example is currently fairly rudimentary, and we [invite the
 community](./contributing) to help complete it. A list of issues and missing
 features of the firewall can be found
 [here](https://github.com/au-ts/lionsos/issues?q=state%3Aopen%20label%3A%22firewall%22).
@@ -30,11 +32,11 @@ are interested in building, running or testing it see the pages on:
 
 The system currently works on the following platforms, although we hope to
 [expand this in the future](https://github.com/au-ts/lionsos/issues/195):
-* QEMU virt AArch64
-* Compulab IOT-GATE-IMX8PLUS
+* QEMU virt AArch64 (2 or 3 network interfaces)
+* Compulab IOT-GATE-IMX8PLUS (2 network interfaces)
 
 The simplest way to get started with testing and developing the firewall is to
-run it on QEMU inside our custom ubuntu Docker container, which emulates the
+run it on QEMU inside our custom Ubuntu Docker container, which emulates the
 required network infrastructure. Instructions on setting up the container can be
 found in the section on [running on QEMU inside Docker](./docker).
 

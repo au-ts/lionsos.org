@@ -83,23 +83,25 @@ tar xf microkit-sdk-{{< microkit_version >}}-macos-x86-64.tar.gz
 {{% /tab %}}
 {{% /tabs %}}
 
-## Compiling the firewall system
+## Building the firewall system
 
-Before compiling the firewall system, it is important that you first update the
-[system wide configuration constants](#firewall-system-constants) that will be
-used in all firewall components. These can be found at the top of the
+Before building the firewall system, it is important that you first update the
+system wide configuration constants that will be used in all firewall
+components. These can be found at the top of the
 [metaprogram](#firewall-metaprogram).
+
+### Debug output
 
 You may also wish to toggle the debug printing of firewall components on or off.
 Debug printing is helpful as it provides a trace of all packets through the
 firewall, however the large number of printing components tend to interfere with
 each other and cause a high degree of latency through the system. The macro used
-to toggle debug printing is `FW_DEBUG_OUTPUT` and can be found in
-`include/lions/firewall/config.h`.
+to toggle debug printing is `DEBUG_FIREWALL` and can be found in
+`include/lions/firewall/common.h`.
 
 If you wish to run the firewall on QEMU inside our Docker container that
 emulates the required networking infrastructure, it is recommended that you
-build the image for QEMU on your host machine and share it with the ubuntu
+build the image for QEMU on your host machine and share it with the Ubuntu
 guest. This is faster and avoids having to install unnecessary dependencies in
 the container. More detailed instructions on this can be found in the section on
 [running on QEMU inside Docker](../docker).
@@ -154,14 +156,11 @@ number of custom firewall Python modules. These modules can be found in the
 ### System configuration data
 
 Build-time system configuration data is passed to LionsOS components via
-*configuration structs*. Due to the high degree of complexity of the firewall
-and the speed at which connections between components are changing, the firewall
-defines a large number of _firewall configuration structs_
-(`include/lions/firewall/config.h`) which are not yet incorporated into the
-`sdfgen` module, as is typically the case for sDDF configuration data.
+pre-filled *configuration structs* which are copied into each component's elf
+file.
 
-Each firewall component which depends on one or more of these structs defines a
-section in their C file,  see the ICMP filter component
+Each component requiring a struct defines a section in their source C file,  for
+example see the ICMP filter component
 (`examples/firewall/filters/icmp_filter.c`):
 
 ```c
@@ -184,7 +183,7 @@ typedef struct fw_filter_config {
 ```
 
 The metaprogram then calculates what data should be in each field, creates a
-data file containing an _initialised_ struct, then copies this initialised
+data file containing the _initialised_ struct, then copies this initialised
 struct into the component's `.elf` file.
 
 In the case of sDDF configuration structs (for example,
@@ -231,7 +230,7 @@ NetworkInterface class, the definition can be found in
 class NetworkInterface:
     index: int
     name: str
-    board_ethernet: str
+    board_ethernet_idx: int
     mac: Tuple[int, ...]
     ip: str
     subnet_bits: int
@@ -253,16 +252,59 @@ class NetworkInterface:
 
 Each network interface must be given an `index` integer (starting from 0). This
 number is used to select which ethernet device the software interface
-corresponds to (the network interface with index 0 uses `ethernet0`).
+corresponds to (the network interface with index 0 uses `board.ethernet[0]`).
 Additionally, the index is used as an identifier for all network components
 receiving packets from this interface, as well as for the interface's Rx DMA
 buffers so they can be returned after forwarding.
 
 In `constants.py`, the `interfaces` array lists each network interface of the
-firewall - by default there are two interfaces listed. For each network
-interface, all interface specific network components (virtualisers, filters, ARP
-components) will be duplicated with the value of the interfaces's `index`
-appended to their elf and Microkit names.
+firewall. For each network interface, all interface specific network components
+(virtualisers, filters, ARP components) will be duplicated with the value of the
+interfaces's `index` appended to their elf and Microkit names.
+
+#### Number of network interfaces
+
+By default the firewall uses three network interfaces for the QEMU platform, and
+two for the IOT-GATE-IMX8PLUS. It is possible to configure the firewall to use
+any number of interfaces >= 2 and <= the number of hardware network interfaces.
+The following steps describe how to change the total number of interfaces:
+
+1. Update the firewall make file `examples/firewall/firewall.mk`:
+
+The build system uses the constant `FIREWALL_INTERFACE_COUNT` to determine the
+number of interfaces. This is passed to the metaprogram as well. This variable
+will need to be updated, as well as which ethernet driver should be used for
+each interface.
+
+```sh
+# Set the number of interfaces used by the firewall here. This must be <= the
+# actual number of interfaces
+FIREWALL_INTERFACE_COUNT := 2
+ifeq ($(MICROKIT_BOARD),qemu_virt_aarch64)
+FIREWALL_INTERFACE_COUNT := 3
+ETH_DRIV2 := ${ETH_DRIV}
+endif
+
+ifeq (${FIREWALL_INTERFACE_COUNT},3)
+IMAGES := eth_driver2.elf
+endif
+```
+
+2. Provide network details for each interface in the metaprogram constants file
+   `examples/firewall/pyfw/constants.py`:
+
+If you have increased the number of interfaces, you will need to document their
+IP addresses and subnets, and provide initial filtering rules for each
+interface.
+
+Note that if you are using less interfaces than defined in `constants.py`,
+interfaces are allocated from the zero-th index upwards.
+
+3. Update docker scripts:
+
+If you wish to use the docker networking setup, you will also have to detail the
+networking configuration you wish to use in
+`examples/firewall/docker/scripts/firewall_configuration.sh`
 
 ### Metaprogram component files
 

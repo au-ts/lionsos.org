@@ -46,9 +46,33 @@ progression through the firewall. For example, a typical log of print statements
 when the webserver is accessed looks as follows:
 
 ```sh
-INT --> EXT | TCP filter found no match, performing default action Allow: (ip 192.168.1.2, port 39202) -> (ip 192.168.1.1, port 80)
-INT --> EXT | TCP filter transmitting via rule 0: (ip 192.168.1.2, port 39202) -> (ip 192.168.1.1, port 80)
-INT --> EXT | Router received packet for ip 192.168.1.1 with buffer number 16
-INT --> EXT | Router converted ip 192.168.1.1 to next hop ip 0.0.0.0 out interface 2
-INT --> EXT | Router transmitted packet to webserver
+MON|INFO: Microkit Monitor started!
+MON|INFO: PD 'timer_driver' is now passive!
+'routing' is client 0
+'micropython' is client 1
+'icmp_module' is client 2
+'arp_responder0' is client 3
+'arp_requester0' is client 4
+'arp_responder1' is client 5
+'arp_requester1' is client 6
+'arp_responder2' is client 7
+'arp_requester2' is client 8
+ROUTING|LOG: routing table initialized with 3 entries:
+ROUTING|LOG:   route 0: ip=172.16.0.0 subnet=16 interface=0 next_hop=0.0.0.0
+ROUTING|LOG:   route 1: ip=192.168.1.0 subnet=24 interface=1 next_hop=0.0.0.0
+ROUTING|LOG:   route 2: ip=10.0.2.0 subnet=24 interface=2 next_hop=0.0.0.0
+MP|INFO: initialising!
+Starting async server on 0.0.0.0:80...
+ARP RESPONDER|LOG: replying for ip 172.16.2.1 on interface 0
+ICMP FILTER|LOG: on interface 0 transmitting via rule 0: (ip 172.16.2.200, port 0) -> (ip 192.168.1.100, port 0)
+ROUTING|LOG: received packet on interface 0 for ip 192.168.1.100 with buffer number 4
+ROUTING|LOG: converted ip 192.168.1.100 to next hop ip 192.168.1.100 arrived on interface 0, exiting on out interface 1
+ARP REQUESTER|LOG: processing client 0 request for ip 192.168.1.100 on interface 1
+ARP REQUESTER|LOG: received response for client 0, ip 192.168.1.100. MAC[0] = b6, MAC[5] = 6e on interface 1
+ROUTING|LOG: dequeuing response for ip 192.168.1.100 on interface 1 and MAC[0]= b6, MAC[5] = 6e
+ROUTING|LOG: sending packet received on interface 0 out of interface 1 for ip 192.168.1.100 with buffer number 4
+ICMP FILTER|LOG: on interface 1 transmitting via rule 0: (ip 192.168.1.100, port 0) -> (ip 172.16.2.200, port 0)
+ROUTING|LOG: received packet on interface 1 for ip 172.16.2.200 with buffer number 3
+ROUTING|LOG: converted ip 172.16.2.200 to next hop ip 172.16.2.200 arrived on interface 1, exiting on out interface 0
+ARP REQUESTER|LOG: processing client 0 request for ip 172.16.2.200 on interface 0
 ```
