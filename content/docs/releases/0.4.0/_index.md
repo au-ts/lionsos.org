@@ -47,6 +47,20 @@ protocol status codes are now mapped directly to standard POSIX error numbers.
 The [libc documentation](/docs/use/language_support/libc/) describes what is and
 is not supported.
 
+### Firewall Example
+
+* Add a [firewall example](/content/docs/examples/firewall/_index.md) to
+  LionsOS.
+* The firewall supports traffic filtering and routing on platforms with 2 or
+  more interfaces.
+* It is configurable at build time via the firewall
+  [metaprogram](/content/docs/examples/firewall/building.md#metaprogram-file),
+  and at run time using the [webserver
+  component](/content/docs/examples/firewall/_index.md#webserver).
+* The example includes a docker environment for running the firewall on QEMU, as
+  well as an automated testing script that sends traffic across each pair of
+  interfaces.
+
 ### WebAssembly
 
 * Add an example system that runs the
