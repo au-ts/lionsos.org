@@ -25,42 +25,38 @@ be found in the the Docker scripts directory `examples/firewall/docker/scripts`.
 ### Namespaces
 
 To force internally generated docker traffic to flow through the firewall, we
-create two isolated network namespaces named `ext` (external) and  `int`
-(internal). Each namespace has only two routes - a local subnet route and a
-default route to the firewall's local gateway IP address. Thus, all non-local IP
-traffic is forwarded to firewall.
+create isolated network namespaces named `namespace*`. Each namespace has only
+two routes - a local subnet route and a default route to the firewall's local
+gateway IP address. Thus, all non-local IP traffic is forwarded to firewall.
 
 To execute a command from within a namespace, you prepend the command with the
 following prefixes:
 
 ```sh
-# Execute from ext namespace
-ip netns exec ext
-
-# Execute from int namespace
-ip netns exec int
+# Execute from namespace 0
+ip netns exec namespace0
 ```
 
 Namespace routes can be listed using the `ip route` command:
 
 ```sh
-root@db756615e5c4:/# ip netns exec ext ip route
-default via 172.16.2.1 dev ext-br0 
-172.16.0.0/12 dev ext-br0 proto kernel scope link src 172.16.2.200
+root@f6a3776dbb10:/# ip netns exec namespace0 ip route
+default via 172.16.2.1 dev namespace-br0
+172.16.0.0/12 dev namespace-br0 proto kernel scope link src 172.16.2.200
 ```
 
 Namespace network interface information can be displayed using the `ifconfig`
 command:
 
 ```sh
-root@db756615e5c4:/# ip netns exec ext ifconfig
-ext-br0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
-        inet 172.16.2.200  netmask 255.240.0.0  broadcast 0.0.0.0
-        inet6 fe80::f0ad:22ff:feaa:4014  prefixlen 64  scopeid 0x20<link>
-        ether f2:ad:22:aa:40:14  txqueuelen 1000  (Ethernet)
-        RX packets 39  bytes 10754 (10.7 KB)
+root@f6a3776dbb10:/# ip netns exec namespace1 ifconfig
+namespace-br1: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 192.168.1.100  netmask 255.255.255.0  broadcast 0.0.0.0
+        inet6 fe80::b4ec:d6ff:fe8a:4d6e  prefixlen 64  scopeid 0x20<link>
+        ether b6:ec:d6:8a:4d:6e  txqueuelen 1000  (Ethernet)
+        RX packets 13  bytes 926 (926.0 B)
         RX errors 0  dropped 0  overruns 0  frame 0
-        TX packets 59  bytes 16542 (16.5 KB)
+        TX packets 19  bytes 1482 (1.4 KB)
         TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
 ```
 
@@ -87,11 +83,8 @@ network virtualisers are working correctly.
 To forward a ping through the firewall, execute the following commands:
 
 ```sh
-# ICMP: ext --> int
-ip netns exec ext ping ${INT_HOST_IP}
-
-# ICMP: int --> ext
-ip netns exec int ping ${EXT_HOST_IP}
+# ICMP: src_iface -> dst_iface
+ip netns exec "namespace${src_iface}" ping "${HOST_IP[${dst_iface}]}"
 ```
 
 #### TCP
@@ -102,13 +95,9 @@ host must listen on a port, and the other must initiate a connection on the same
 port:
 
 ```sh
-# TCP: ext listens, int initiates
-ip netns exec int nc -l ${TEST_PORT}
-ip netns exec ext nc ${INT_HOST_IP} ${TEST_PORT}
-
-# TCP: int listens --> ext initiates
-ip netns exec ext nc -l ${TEST_PORT}
-ip netns exec int nc ${EXT_HOST_IP} ${TEST_PORT}
+# TCP: dst listens, src initiates
+ip netns exec "namespace${dst_iface}" nc -l ${TEST_PORT}
+ip netns exec "namespace${src_iface}" nc ${HOST_IP[${dst_iface}]} ${TEST_PORT}
 ```
 
 Once the connection is established, input entered into one terminal should be
@@ -120,13 +109,9 @@ UDP is essentially the same as TCP, with an additional netcat `-u` flag
 specifying UDP:
 
 ```sh
-# UDP: ext listens, int initiates
-ip netns exec int nc -ul ${TEST_PORT}
-ip netns exec ext nc -u ${INT_HOST_IP} ${TEST_PORT}
-
-# UDP: int listens --> ext initiates
-ip netns exec ext nc -ul ${TEST_PORT}
-ip netns exec int nc -u ${EXT_HOST_IP} ${TEST_PORT}
+# UDP: dst listens, src initiates
+ip netns exec "namespace${dst_iface}" nc -ul ${TEST_PORT}
+ip netns exec "namespace${src_iface}" nc -u ${HOST_IP[${dst_iface}]} ${TEST_PORT}
 ```
 
 ### Testing the ICMP module
@@ -138,11 +123,8 @@ explicitly enabled to do so. If you wish to test for ping responsiveness, ensure
 it is enabled.
 
 ```sh
-# ICMP: ext --> Firewall ext
-ip netns exec ext ping ${FW_EXT_IP}
-
-# ICMP: int --> Firewall int
-ip netns exec int ping ${FW_INT_IP}
+# ICMP: src_iface --> Firewall
+ip netns exec "namespace${src_iface}" ping ${FW_IP[${src_iface}]}
 ```
 
 #### ICMP reject rules
@@ -173,8 +155,7 @@ sender of a packet if its destination IP address can't be reached. To test this,
 you can attempt to ping an IP address that doesn't exist:
 
 ```sh
-ip netns exec ext ping ${INT_BAD_HOST_IP}
-ip netns exec int ping ${EXT_BAD_HOST_IP}
+ip netns exec namespace0 ping ${BAD_HOST_IP[0]}
 ```
 
 Since these addresses lie within a subnet that *is* reachable, this will
@@ -186,7 +167,7 @@ trigger the router to send a request to the ICMP module to send an ICMP
 in your ping command outputting the following:
 
 ```sh
-root@db756615e5c4:~# ip netns exec ext ping ${INT_BAD_HOST_IP}
+root@db756615e5c4:~# ip netns exec namespace1 ping ${BAD_HOST_IP[1]}
 PING 192.168.1.101 (192.168.1.101) 56(84) bytes of data.
 From 172.16.2.1 icmp_seq=1 Destination Host Unreachable
 From 172.16.2.1 icmp_seq=2 Destination Host Unreachable
@@ -206,14 +187,14 @@ with a very low TTL, so the packet expires at the firewall hop.
 Run:
 
 ```sh
-ip netns exec ext ping -t 1 ${INT_HOST_IP}
+ip netns exec namespace0 ping -t 1 ${HOST_IP[1]}
 ```
 
 With `-t 1`, the packet cannot reach the destination host, and ping should
 report `Time to live exceeded`, for example:
 
 ```sh
-root@db756615e5c4:~# ip netns exec ext ping -t 1 ${INT_HOST_IP}
+root@db756615e5c4:~# ip netns exec namespace0 ping -t 1 ${HOST_IP[1]}
 PING 192.168.1.100 (192.168.1.100) 56(84) bytes of data.
 From 172.16.2.1 icmp_seq=1 Time to live exceeded
 From 172.16.2.1 icmp_seq=2 Time to live exceeded
@@ -233,37 +214,24 @@ prints as it processes a packet with details of how the packet is being
 processed, as well as destination and source IP and MAC address.
 
 In addition, you can use `tcpdump` on each virtual interface within the
-container, with some interfaces only being accessible from within the internal
-or external namespaces. Starting from the veth connected to the external name
-space in the external -> internal direction, the following `tcpdump` commands
-can be used:
+container, with some interfaces only being accessible from within namespaces.
+Starting from the veth connected to namespace0 in the direction towards the
+firewall, the following `tcpdump` commands can be used:
 
 ```sh
 # TCP dump interfaces (e - include ethernet, x - hexdump packet, -i interface)
 
-# veth attached to the external namespace
-ip netns exec ext tcpdump -ex -i ext-br0
+# veth attached to namespace0
+ip netns exec namespace0 tcpdump -ex -i namespace-br0
 
-# veth attached to the external bridge
-tcpdump -ex -i br0-ext
+# veth attached to bridge0
+tcpdump -ex -i br-namespace0
 
-# external bridge
+# bridge0
 tcpdump -ex -i br0
 
-# external tap of the firewall
+# tap0 of the firewall
 tcpdump -ex -i tap0
-
-# internal tap of the firewall
-tcpdump -ex -i tap1
-
-# internal bridge
-tcpdump -ex -i br1
-
-# veth attached to the internal bridge
-tcpdump -ex -i br1-int
-
-# veth attached to the internal namespace
-ip netns exec int tcpdump -eX -i int-br1
 ```
 
 Using these commands allows you to trace traffic through the virtual network,
@@ -274,6 +242,12 @@ somewhere.
 
 An automated testing script is available in the `docker/scripts` directory; it
 performs much of the testing described above.
+
+The number of tests the autotest performs depends on the number of interfaces
+used by the firewall image. For tests involving a single interface, the autotest
+will perform the test on all interfaces. For tests involving the flow of traffic
+between interfaces, the autotest will perform the test on all pairs of
+interfaces (in each direction).
 
 #### Running the script
 
@@ -408,5 +382,5 @@ crucial if a test has several failure points. The `fail` function returns a
 non-zero exit status. The `print_log` function should typically follow each
 `fail` call so that firewall debug output can be displayed if enabled.
 
-For tests that involve waiting for a timeout of some kind, it is reccomended
+For tests that involve waiting for a timeout of some kind, it is recommended
 to notify the user of the typical duration using the `print_info` function.

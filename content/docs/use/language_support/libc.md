@@ -41,8 +41,8 @@ applications, including `socket`, `bind`, `listen`, `accept`, `connect`,
 `sendto`, `recvfrom`, `getsockname`, `getpeername`, and `ppoll` (timeout and
 sigmask are ignored). UDP is not supported.
 - Time: `clock_gettime` (monotonic) and `nanosleep` are available.
-- Memory: Heap allocation via `brk` and anonymous `mmap`, drawing from a static
-1MB pool. Memory cannot be freed.
+- Memory: Heap allocation via `brk` and anonymous `mmap`, drawing from a memory
+region that the component provides at initialisation. Memory cannot be freed.
 - Other: `getrandom` provides pseudo-random data (insecure, uses `rand`).
 `fcntl` supports `F_GETFL`/`F_SETFL` for non-blocking I/O.
 
@@ -73,9 +73,9 @@ static inline long __syscall3(long n, long a1, long a2, long a3) {
 LionsOS provides the `__sysinfo` implementation in `libc_init()`:
 
 ```c
-void libc_init() {
+void libc_init(libc_socket_config_t *socket_config, void *heap, size_t heap_size) {
     /* Syscall table init */
-    __sysinfo = sel4_vsyscall;
+    __sysinfo = (size_t)sel4_vsyscall;
 ...
 ```
 
@@ -116,6 +116,31 @@ This ensures sDDF components use the LionsOS library headers instead of falling
 back to sDDF's internal, vendored libc. Since sDDF components list this as a
 prerequisite, it also guarantees the headers are available *before* compilation
 begins.
+
+## Initialisation
+
+Before using any libc functionality, the component must call `libc_init()`:
+
+```c
+#include <lions/posix/posix.h>
+
+static char heap[0x100000];
+
+void init(void) {
+    libc_init(NULL, heap, sizeof(heap));
+    ...
+}
+```
+
+The second and third arguments are the memory region that `brk` and anonymous
+`mmap` allocate from. The component owns this region, so how much memory it
+gets is up to the component rather than the library. Pass `NULL` and `0` if it
+does not need heap allocation.
+
+The first argument describes the socket operations that the component provides,
+since the library itself does not talk to the network sub-system. It may be
+`NULL` for components that do not use sockets; see `libc_socket_config_t` in
+`include/lions/posix/posix.h` for the operations required.
 
 ## POSIX Implementations and Compiler Runtime Support
 

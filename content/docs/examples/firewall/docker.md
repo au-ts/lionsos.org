@@ -67,12 +67,13 @@ default SSH identity key to connect to the container, you can also ignore the
 
 The IP address and subnet of each firewall interface can also be changed by
 modifying this file. However, the values set in this file are only used for
-creating the virtual network in the Docker container, and will not update the
-build-time values set in the firewall metaprogram which are used to create the
-firewall image. The default network configuration values are set to match the
-default IP addresses and subnets in the metaprogram, so if you wish to change
-them you will need to ensure you also change the corresponding [metaprogram
-values](../building#firewall-system-constants) and rebuild the image.
+creating the virtual network in the Docker container and testing, and will not
+update the build-time values set in the firewall metaprogram which are used to
+create the firewall image. The default network configuration values are set to
+match the default IP addresses and subnets in the metaprogram, so if you wish to
+change them you will need to ensure you also change the corresponding
+[metaprogram values](../building#firewall-system-constants) and rebuild the
+image.
 
 ### Building
 
@@ -213,9 +214,9 @@ connection with port forwarding:
 ```sh
 ssh -o StrictHostKeyChecking=no \
     -o UserKnownHostsFile=/dev/null \
-    -L ${HOST_HTTP_PORT}:${FW_INT_IP}:80 \
-    -i ${HOST_KEY_PATH} \
-    root@localhost -p ${HOST_SSH_PORT}
+    -L "${HOST_HTTP_PORT}:${FW_WEBSERVER_IP}:80" \
+    -i "${HOST_KEY_PATH}" \
+    root@localhost -p "${HOST_SSH_PORT}"
 ```
 
 This is the same command described [above](#connecting-to-the-docker-container),
