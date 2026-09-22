@@ -65,19 +65,19 @@ Run the following commands depending on your machine:
 {{% tab "Linux (x64)" %}}
 
 ```sh
-wget https://trustworthy.systems/Downloads/microkit/microkit-sdk-{{< microkit_version >}}-linux-x86-64.tar.gz
+wget https://github.com/seL4/microkit/releases/download/{{< microkit_version >}}/microkit-sdk-{{< microkit_version >}}-linux-x86-64.tar.gz
 tar xf microkit-sdk-{{< microkit_version >}}-linux-x86-64.tar.gz
 ```
 {{% /tab %}}
 {{% tab "macOS (ARM64)" %}}
 ```sh
-wget https://trustworthy.systems/Downloads/microkit/microkit-sdk-{{< microkit_version >}}-macos-aarch64.tar.gz
+wget https://github.com/seL4/microkit/releases/download/{{< microkit_version >}}/microkit-sdk-{{< microkit_version >}}-macos-aarch64.tar.gz
 tar xf microkit-sdk-{{< microkit_version >}}-macos-aarch64.tar.gz
 ```
 {{% /tab %}}
 {{% tab "macOS (x64)" %}}
 ```sh
-wget https://trustworthy.systems/Downloads/microkit/microkit-sdk-{{< microkit_version >}}-macos-x86-64.tar.gz
+wget https://github.com/seL4/microkit/releases/download/{{< microkit_version >}}/microkit-sdk-{{< microkit_version >}}-macos-x86-64.tar.gz
 tar xf microkit-sdk-{{< microkit_version >}}-macos-x86-64.tar.gz
 ```
 {{% /tab %}}
