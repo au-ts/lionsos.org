@@ -6,15 +6,6 @@ weight = 10
 
 # Building
 
-{{< hint info >}}
-The firewall example currently relies on Microkit changes that are not part of a released version.
-If you have previously setup your machine for LionsOS before make sure to follow the instructions
-for acquiring the pre-release version of Microkit below.
-
-<br>
-Once the next Microkit release is out, we will pin to that instead.
-{{< /hint >}}
-
 ## Acquire source code
 
 ```sh
