@@ -6,15 +6,6 @@ weight = 10
 
 # Building
 
-{{< hint info >}}
-The firewall example currently relies on Microkit changes that are not part of a released version.
-If you have previously setup your machine for LionsOS before make sure to follow the instructions
-for acquiring the pre-release version of Microkit below.
-
-<br>
-Once the next Microkit release is out, we will pin to that instead.
-{{< /hint >}}
-
 ## Acquire source code
 
 ```sh
@@ -65,19 +56,19 @@ Run the following commands depending on your machine:
 {{% tab "Linux (x64)" %}}
 
 ```sh
-wget https://trustworthy.systems/Downloads/microkit/microkit-sdk-{{< microkit_version >}}-linux-x86-64.tar.gz
+wget https://github.com/seL4/microkit/releases/download/{{< microkit_version >}}/microkit-sdk-{{< microkit_version >}}-linux-x86-64.tar.gz
 tar xf microkit-sdk-{{< microkit_version >}}-linux-x86-64.tar.gz
 ```
 {{% /tab %}}
 {{% tab "macOS (ARM64)" %}}
 ```sh
-wget https://trustworthy.systems/Downloads/microkit/microkit-sdk-{{< microkit_version >}}-macos-aarch64.tar.gz
+wget https://github.com/seL4/microkit/releases/download/{{< microkit_version >}}/microkit-sdk-{{< microkit_version >}}-macos-aarch64.tar.gz
 tar xf microkit-sdk-{{< microkit_version >}}-macos-aarch64.tar.gz
 ```
 {{% /tab %}}
 {{% tab "macOS (x64)" %}}
 ```sh
-wget https://trustworthy.systems/Downloads/microkit/microkit-sdk-{{< microkit_version >}}-macos-x86-64.tar.gz
+wget https://github.com/seL4/microkit/releases/download/{{< microkit_version >}}/microkit-sdk-{{< microkit_version >}}-macos-x86-64.tar.gz
 tar xf microkit-sdk-{{< microkit_version >}}-macos-x86-64.tar.gz
 ```
 {{% /tab %}}
