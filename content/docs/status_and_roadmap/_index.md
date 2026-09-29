@@ -114,11 +114,11 @@ We are aiming to make a tutorial on how to build a basic system using LionsOS,
 similar to building one of our [example systems](../examples) from scratch.
 
 We'd also like to have similar tutorials for setting up libvmm, as well adding
-new filters to the Firewall.
+new features to the Firewall.
 
 ## Long term roadmap
 
-The following are features we have experimented or are actively working on but are still a while
+The following are features we have experimented with or are actively working on but are still a while
 away from being available for use.
 
 ### More dynamicism
