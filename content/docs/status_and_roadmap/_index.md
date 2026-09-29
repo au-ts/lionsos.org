@@ -97,14 +97,12 @@ are working on Ethernet and other classes.
 
 ### PCIe Passthrough {#pcie-passthrough}
 
-Our VMM, libvmm, supports AArch64 and x86-64 using VirtIO drivers exposed to
-the guest. On AArch64 platforms we implement hardware passthrough, but for x86-64
-we need to passthrough devices attached to the PCIe bus.
+Our VMM, libvmm, supports AArch64 and x86-64 guests, exposing VirtIO devices
+to the guest for storage and networking. On AArch64 we also support device passthrough.
+On x86-64, passthrough requires handling devices on the PCIe bus, which we don't yet support.
 
-There is an initial working implementation of this but it needs to be cleaned up
-and merged.
-
-TODO @billn fill out.
+We have a working prototype, but it isn't ready for public use. We're now
+implementing a more principled version.
 
 ### More tutorials and guides {#tutorials}
 
@@ -143,3 +141,13 @@ outlined above.
 
 We are also interested in exploring using a [Web Assembly](https://webassembly.org/) runtime combined
 with [WASI](https://wasi.dev/) to implement similar usability, but have not started working on this yet.
+
+### Virtualisation
+
+Our VMM, libvmm, can boot Linux on aarch64 and x86-64, and Windows 11 on x86-64.
+
+Longer term, we plan to support:
+
+* Multi-vCPU guests on x86-64 (already supported on aarch64).
+* Windows guests on aarch64.
+* RISC-V, which will also require implementing support for the RISC-V hypervisor extension in seL4 itself.
