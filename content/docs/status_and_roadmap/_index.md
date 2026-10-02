@@ -93,7 +93,10 @@ https://trustworthy.systems/projects/deviceformalisation).
 
 This work is about merging our Pancake variants of our device classes into
 mainline sDDF. So far, the Serial drivers have Pancake implementations and we
-are working on Ethernet and other classes.
+are working on Ethernet and other classes. Our [artifacts for our PLOS'26](
+https://github.com/au-ts/sddf/commits/plos2026/) paper [SMT-based Deductive
+Verification of Device Drivers using the Pancake-to-Viper Transpiler](
+https://doi.org/10.1145/3831586.3838153) are also available.
 
 ### PCIe Passthrough {#pcie-passthrough}
 
