@@ -31,10 +31,10 @@ please [contact us](../contributing#getting-help).
 
 | Feature | Current status | Timeline | Available at |
 |---------|----------------|----------|--------------|
-| [Better tooling for building systems](#tooling) | Implementation | Q4'26 | [microkit_acacia](https://github.com/au-ts/microkit_acacia/) |
+| [Better tooling for building systems](#tooling) | Implementation | Q4'26 | [Acacia](https://github.com/au-ts/microkit_acacia/) |
 | [Generic queues for OS communication](#generic-queues) | Planning | Q4'26 | N/A |
 | [Verified drivers in Pancake](#pancake) | Implementation | Q4'26 | [pancake.md](https://github.com/au-ts/sddf/blob/main/docs/pancake.md) |
-| [PCIe passthrough for libvmm](#pcie-passthrough) | Implementation | Q4'26 | TODO @billn |
+| [PCIe passthrough for libvmm](#pcie-passthrough) | Implementation | Q4'26 | N/A |
 | [More tutorials and guides](#tutorials) | Unstarted | Q4'26 | N/A |
 
 Status:
