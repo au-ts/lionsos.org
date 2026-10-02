@@ -23,36 +23,111 @@ By doing so we have been able to improve the usability and off-the-shelf
 functionality that LionsOS provides, but there is still much work that is
 being done on LionsOS and is to be done in the future.
 
-## Short term roadmap
+To send feature requests, or ask about the status of items on our roadmap,
+please [contact us](../contributing#getting-help).
 
-Below are a couple projects we are actively working on and the general
-direction we are taking for the next couple months.
+## Roadmap
 
-### Better tooling
 
-With [release 0.3.0](../releases/0.3.0) we introduced [metaprogramming tooling](../releases/0.3.0/#metaprogram-tooling)
-to make it easier to develop a LionsOS system. There are still many areas to improve with this tooling
-and are doing so as we use it more and more internally.
+| Feature | Current status | Timeline | Available at |
+|---------|----------------|----------|--------------|
+| [Better tooling for building systems](#tooling) | Implementation | Q4'26 | [Acacia](https://github.com/au-ts/microkit_acacia/) |
+| [Generic queues for OS communication](#generic-queues) | Planning | Q4'26 | N/A |
+| [Verified drivers in Pancake](#pancake) | Implementation | Q4'26 | [pancake.md](https://github.com/au-ts/sddf/blob/main/docs/pancake.md) |
+| [PCIe passthrough for libvmm](#pcie-passthrough) | Implementation | Q4'26 | N/A |
+| [More tutorials and guides](#tutorials) | Unstarted | Q4'26 | N/A |
 
-The two other main areas to help the usability of LionsOS is proper [GDB support](../use/debugging).
-and [performance profiling](../use/profiling).
+Status:
 
-The profiler is still under-going a lot of experimentation but GDB support is close to being merged
-in and available for use.
+* *Unstarted:* We have not started working on this.
+* *Planning:* We are working on designs for how this will be implemented.
+* *Implementation:* We are actively writing code.
+* *Complete:* We have completed this, but it is not yet released.
 
-### x86-64 support
+Timeline:
 
-While we have support for various ARM and RISC-V platforms, there is community
-interest for x86-64 support which we are actively working on.
+* Q24'26: We are aiming on completing a LionsOS 0.5.0 release, including
+  sDDF 0.8.0 and libvmm 0.3.0 at the end of 2026.
 
-This requires a number of changes to seL4 Microkit itself as well as basic drivers
-such as ethernet and SATA/AHCI in sDDF.
 
-We also working on porting our virtual-machine-monitor to support VMs on x86-64.
+### Better tooling for building systems {#tooling}
+
+LionsOS release 0.3.0 introduced a new ['meta program' tooling](
+../releases/0.3.0/#metaprogram-tooling) to make it easier to construct LionsOS
+systems. This was motivated by our need to maintain many different copies of the
+[Microkit System Description Files](
+https://docs.sel4.systems/projects/microkit/manual/latest/#sysdesc) and allow
+multiple re-use of system components, e.g. the network stack and its configurations.
+
+We've found that our initial tool, [sdfgen](https://github.com/au-ts/microkit_sdf_gen)
+was quickly outgrown by our needs, and required knowledge about how the 'OS'
+components of our systems were put together to be able to use effectively.
+
+Our redesign, 'Acacia', is intended to replace the Zig tooling with Python scripts
+co-located inside sDDF, LionsOS and libvmm for high-level abstractions to
+integrate them into build examples.
+
+For more details, please see [Lesley Rossouw's 2026 seL4 Summit Talk:
+Simplifying Microkit System Composition with Acacia](
+https://sel4.systems/Summit/2026/abstracts2026.html#a-simplifying-microkit) and
+the [Acacia GitHub repository](https://github.com/au-ts/microkit_acacia).
+
+### Generic queues for OS communication {#generic-queues}
+
+Our I/O device classes ([sDDF](../components/io)) implement a variety of lockless
+queues which are specific to each device class, but all of them behave similarly,
+and [could be unified into one queue structure](
+https://github.com/seL4/rfcs/pull/19#issuecomment-4713252927) for use across
+the Operating System, and even for Client-Client asynchronous communication.
+
+We are aiming to have a reuseable framework for writing these queues, and use
+it to rebuild our existing queues, de-duplicating our work on checking the
+correctness of memory barriers and the [Signalling protocol](
+https://github.com/au-ts/sddf/blob/0.7.0/docs/developing.md#signalling-protocol).
+
+### Verified drivers in Pancake {#pancake}
+
+One of our research projects is the [Pancake Systems Language](
+https://trustworthy.systems/projects/pancake) which is designed to make
+verification of OS components (drivers, virtualisers) easy through a verified
+compiler based on CakeML.
+
+We have had verification of functional correctness for several Ethernet drivers,
+and recently completed verification of the Transmit Virtualiser; with work to
+link this up to the [Device implementation](
+https://trustworthy.systems/projects/deviceformalisation).
+
+This work is about merging our Pancake variants of our device classes into
+mainline sDDF. So far, the Serial drivers have Pancake implementations and we
+are working on Ethernet and other classes. Our [artifacts for our PLOS'26](
+https://github.com/au-ts/sddf/commits/plos2026/) paper [SMT-based Deductive
+Verification of Device Drivers using the Pancake-to-Viper Transpiler](
+https://doi.org/10.1145/3831586.3838153) are also available.
+
+### PCIe Passthrough {#pcie-passthrough}
+
+Our VMM, libvmm, supports AArch64 and x86-64 guests, exposing VirtIO devices
+to the guest for storage and networking. On AArch64 we also support device passthrough.
+On x86-64, passthrough requires handling devices on the PCIe bus, which we don't yet support.
+
+We have a working prototype, but it isn't ready for public use. We're now
+implementing a more principled version.
+
+### More tutorials and guides {#tutorials}
+
+One of the pieces of feedback we have received from online forums and following
+the [seL4 Summit](https://sel4.systems/Summit/2026/) was that we need to provide
+more guides to using LionsOS.
+
+We are aiming to make a tutorial on how to build a basic system using LionsOS,
+similar to building one of our [example systems](../examples) from scratch.
+
+We'd also like to have similar tutorials for setting up libvmm, as well adding
+new features to the Firewall.
 
 ## Long term roadmap
 
-The following are features we have experimented or are actively working on but are still a while
+The following are features we have experimented with or are actively working on but are still a while
 away from being available for use.
 
 ### More dynamicism
@@ -75,3 +150,13 @@ outlined above.
 
 We are also interested in exploring using a [Web Assembly](https://webassembly.org/) runtime combined
 with [WASI](https://wasi.dev/) to implement similar usability, but have not started working on this yet.
+
+### Virtualisation
+
+Our VMM, libvmm, can boot Linux on aarch64 and x86-64, and Windows 11 on x86-64.
+
+Longer term, we plan to support:
+
+* Multi-vCPU guests on x86-64 (already supported on aarch64).
+* Windows guests on aarch64.
+* RISC-V, which will also require implementing support for the RISC-V hypervisor extension in seL4 itself.
