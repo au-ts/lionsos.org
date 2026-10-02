@@ -64,7 +64,13 @@ was quickly outgrown by our needs, and required knowledge about how the 'OS'
 components of our systems were put together to be able to use effectively.
 
 Our redesign, 'Acacia', is intended to replace the Zig tooling with Python scripts
-co-located inside sDDF, LionsOS and libvmm.
+co-located inside sDDF, LionsOS and libvmm for high-level abstractions to
+integrate them into build examples.
+
+For more details, please see [Lesley Rossouw's 2026 seL4 Summit Talk:
+Simplifying Microkit System Composition with Acacia](
+https://sel4.systems/Summit/2026/abstracts2026.html#a-simplifying-microkit) and
+the [Acacia GitHub repository](https://github.com/au-ts/microkit_acacia).
 
 ### Generic queues for OS communication {#generic-queues}
 
