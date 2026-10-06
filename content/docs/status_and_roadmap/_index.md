@@ -61,11 +61,27 @@ multiple re-use of system components, e.g. the network stack and its configurati
 
 We've found that our initial tool, [sdfgen](https://github.com/au-ts/microkit_sdf_gen)
 was quickly outgrown by our needs, and required knowledge about how the 'OS'
-components of our systems were put together to be able to use effectively.
+components of our systems were put together to be able to use effectively. Further,
+sdfgen allowed us to modularise components like sDDF drivers, since the Microkit
+offers no mechanism to do this. sdfgen was inflexible however; modules were stored in
+the sdfgen repository, meaning changes to the sDDF, libvmm or LionsOS required a
+corresponding sdfgen pull request.
 
-Our redesign, 'Acacia', is intended to replace the Zig tooling with Python scripts
-co-located inside sDDF, LionsOS and libvmm for high-level abstractions to
-integrate them into build examples.
+Our new tool, Acacia, is a system composition tool for Microkit systems that inherits
+the functionality of sdfgen and adds a module abstraction to allow reuse of parts of
+Microkit systems. Rather than keeping all logic to assemble LionsOS systems within the
+sdfgen repo, Acacia is a minimal tool that requires zero knowledge of the tools that use it.
+I.e. it allows us to create bespoke modules co-located with the code they
+modularise. This allows us to maintain our system composition abstractions for the sDDF,
+libVMM and LionsOS in their respective repositories.
+
+Acacia's module system allows users to quickly insert previous work and parameterise it.
+It is suitable for any Microkit or LionsOS components, including
+applications such as the LionsOS firewall, augmentations to existing PDs like LWIP or the
+benchmark client, and even entire LionsOS systems.
+
+Acacia also significantly reduces the complexity of metaprograms and has an enhanced API
+with many QoL features to make programming errors more difficult.
 
 For more details, please see [Lesley Rossouw's 2026 seL4 Summit Talk:
 Simplifying Microkit System Composition with Acacia](
