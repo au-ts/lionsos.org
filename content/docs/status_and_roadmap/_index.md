@@ -6,7 +6,7 @@ title: "Status & Roadmap"
 
 # Status & Roadmap
 
-We have had a couple of alpha releases of LionsOS now.
+We have had several alpha releases of LionsOS now.
 
 We have a number of example systems that show off the features and
 capabilities of LionsOS on a number of ARM and RISC-V platforms.
@@ -160,9 +160,9 @@ can find more details on the [Microkit roadmap](https://docs.sel4.systems/projec
 
 ### Containers
 
-We currently have a project that aims to turn LionsOS into a library OS that supports container-like
-applications that can be spun up and destroyed on demand. This ties into the 'PD templates' feature
-outlined above.
+We currently have a project that aims to use LionsOS to provide a 'library OS'-like
+environment for container microservices: applications that can be spun up and
+destroyed on demand. This ties into the 'PD templates' feature outlined above.
 
 We are also interested in exploring using a [Web Assembly](https://webassembly.org/) runtime combined
 with [WASI](https://wasi.dev/) to implement similar usability, but have not started working on this yet.

@@ -6,11 +6,13 @@ type: docs
 # The Lions Operating System
 
 {{< hint info >}}
-LionsOS is currently undergoing active research and
-development, it does not have a concrete verification story yet.
+LionsOS is currently undergoing active research and development. We are working
+on the verification of our device drivers and device-class components, but this
+is not yet complete.
 
-It is not expected for LionsOS to be stable at this time, but it
-is available for others to experiment with.
+Our base device classes (Network, Block, Serial, I²C, etc) are expected to be
+mostly stable, but some newer device classes and OS-components are more in flux.
+
 {{< /hint >}}
 
 LionsOS is an operating system based on the [seL4 microkernel](https://sel4.systems)
@@ -18,7 +20,9 @@ with the goal of making the achievements of seL4 accessible. That is,
 to provide performance, security, and reliability.
 
 LionsOS is being developed by the [Trustworthy Systems](https://trustworthy.systems) research
-group at [UNSW Sydney](https://unsw.edu.au) in Australia.
+group at [UNSW Sydney](https://unsw.edu.au) in Australia. Please see our
+[Status & Roadmap](/docs/status_and_roadmap/) page for more details on current
+and future plans.
 
 <!-- TODO: add architecture picture -->
 <img src="/lionsos_arch.svg" alt="Architecture of a LionsOS-based system" />
