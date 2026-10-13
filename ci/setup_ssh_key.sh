@@ -20,6 +20,10 @@ Host ts
   User lions_web_updater
   IdentityFile ~/.ssh/id_ed25519
 
+Host lions-www.keg.cse.unsw.edu.au
+  User lions_web_updater
+  IdentityFile ~/.ssh/id_ed25519
+  ProxyJump ts
 EOF
 
 echo "${DEPLOY_SSH_KEY}" > ~/.ssh/id_ed25519

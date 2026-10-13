@@ -46,5 +46,4 @@ jobs:
         env:
           DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
       - name: Deploy
-        run: |
-          cat ./ci/sftp | sftp -i ~/.ssh/id_ed25519 -J ts lions_web_updater@lions-www.keg.cse.unsw.edu.au
+        run: ./ci/deploy_docs.sh
