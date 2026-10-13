@@ -1,2 +1,0 @@
-put -R lionsos_docs/* /var/www/html/
-exit
