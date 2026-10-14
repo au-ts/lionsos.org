@@ -54,4 +54,7 @@ names of the ELF files that our sDDF drivers use.
 
 ```make
 include $(SDDF)/tools/make/board/common.mk
+# calls...
+# ... include $(SDDF)/tools/make/board/$(MICROKIT_BOARD).mk
+# ... include $(SDDF)/tools/make/toolchain/$(TOOLCHAIN).mk
 ```
