@@ -32,7 +32,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: build
     # Do not deploy unless we've pushed to main and we're not on a fork
-    if: ${{ github.repository_owner == 'au-ts' && github.ref == 'refs/heads/main' }}
+    # if: ${{ github.repository_owner == 'au-ts' && github.ref == 'refs/heads/main' }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -47,3 +47,8 @@ jobs:
           DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
       - name: Deploy
         run: ./ci/deploy_docs.sh
+      - name: Setup upterm session
+        if: ${{ failure() }}
+        uses: owenthereal/action-upterm@v2
+        with:
+          limit-access-to-actor: true # Restrict to the user who triggered the workflow
