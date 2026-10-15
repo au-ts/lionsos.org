@@ -1,5 +1,5 @@
 baseURL = 'https://lionsos.org/'
-languageCode = 'en-au'
+locale = 'en-au'
 title = 'LionsOS 0.4.0'
 theme = 'hugo-book'
 
