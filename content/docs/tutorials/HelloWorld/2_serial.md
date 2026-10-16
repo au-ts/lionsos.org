@@ -221,6 +221,9 @@ Now, follow the [sDDF documentation](https://github.com/au-ts/sddf/blob/main/doc
 the the `hello.c` to initialise the queues and then print. This requires makefile,
 meta.py, and C changes.
 
+You'll also want to replace `sddf_dprintf` with `sddf_printf`, for release-mode
+printing.
+
 <!-- Solution 2c -->
 
 Once you've done that, you should see the following output:
@@ -231,3 +234,6 @@ Begin input
 'hello' is client 0
 hello, world
 ```
+
+Notably, if you compile with `make MICROKIT_CONFIG=release`, you should see
+output now.
