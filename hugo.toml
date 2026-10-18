@@ -9,7 +9,7 @@ unsafe = true
 [params]
   # (Optional, default light) Sets color theme: light, dark or auto.
   # Theme 'auto' switches between dark and light modes based on browser/os preferences
-  BookTheme = 'lionsos'
+  BookTheme = 'dark'
   BookLogo = 'lionsos_logo.svg'
   BookSection = 'docs'
   BookRepo = 'https://github.com/au-ts/lionsos_docs'
