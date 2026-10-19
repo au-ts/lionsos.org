@@ -93,37 +93,29 @@ and switch 2 needs to be not set. The image below can be used as reference.
 Below is a close-up of the back of the right side of the VU7C display. Highlighted in
 green are the relevant pins that we need to connect to the NFC reader:
 
-{{< columns >}}
+{{% columns %}}
+- <img src="/nfc_connect_display.jpg" alt="" width="300"/>
 
-<img src="/nfc_connect_display.jpg" alt="" width="300"/>
-
-<--->
-
-| Display pin | NFC card reader pin |
-| ---- | ---- |
-| GND  | GND |
-| P5V0 | VCC |
-| SCL  | SCL |
-| SDA  | SDA |
-
-{{< /columns >}}
+- | Display pin | NFC card reader pin |
+  | ---- | ---- |
+  | GND  | GND |
+  | P5V0 | VCC |
+  | SCL  | SCL |
+  | SDA  | SDA |
+{{% /columns %}}
 
 #### Without display
 
-{{< columns >}}
+{{% columns %}}
+- <img src="/odroidc4_gpio_pins_nfc.jpg" alt="TODO" width="400"/>
 
-<img src="/odroidc4_gpio_pins_nfc.jpg" alt="TODO" width="400"/>
-
-<--->
-
-| GPIO pin | NFC card reader pin |
-| ---- | ---- |
-| 3 (bottom-left) | SDA |
-| 4 (top-left) | VCC |
-| 5 (bottom-right) | SCL |
-| 6 (top-right) | GND |
-
-{{< /columns >}}
+- | GPIO pin | NFC card reader pin |
+  | ---- | ---- |
+  | 3 (bottom-left) | SDA |
+  | 4 (top-left) | VCC |
+  | 5 (bottom-right) | SCL |
+  | 6 (top-right) | GND |
+{{% /columns %}}
 
 ### Ethernet
 
