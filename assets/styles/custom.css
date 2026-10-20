@@ -38,6 +38,7 @@ body {
   --gray-500: #999d9f;
 
   --color-accent-note: #6bf;
+  --container-max-width: 85rem;
 }
 
 .book-brand {
