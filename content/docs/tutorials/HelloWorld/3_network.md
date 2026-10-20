@@ -59,7 +59,15 @@ You'll want to set up:
         -I$(LWIPDIR)/include/ipv4 \
     ```
 
-*   You'll also need a copy of the `lwipopts.h` file, to include. We suggest
-    taking the [copy from sDDF echo server](https://github.com/au-ts/sddf/blob/main/examples/echo_server/include/lwip/lwipopts.h), and it to the `CFLAGS` as well.
+*   You'll notice the `lwip_include` folder in the example. You need to add
+    it also to the CFLAGS listing:
+
+    ```make
+          -I$(TOP)/lwip_include
+    ```
 
 <!-- TODO: more explanation of how this all works? IDK -->
+
+<!-- At this point I somewhat gave up and went to write the rest of the
+     actual code solution. Note that we'll need to rework this for lionsos.mk
+     a little bit, and with acacia. -->

@@ -113,6 +113,7 @@ the [seL4 Microkit tutorial].
 
 [seL4 Microkit tutorial]: https://docs.sel4.systems/projects/microkit/tutorial/welcome.html
 
+For now, please ignore `lwip_include` as we'll use it later.
 
 [Next](../2_serial), we'll be setting up a connection to our LionsOS serial
 subsystem, so that we can print outside of debug mode.
